@@ -9,6 +9,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+import authRoutes from "./Routes/authRoutes/auth.routes.js";
+app.use("/api/auth", authRoutes);
+
+
 app.get("/", (req, res) => {
   res.json({
     message: "Techlink API is running",
