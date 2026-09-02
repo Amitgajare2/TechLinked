@@ -13,6 +13,10 @@ import authRoutes from "./Routes/authRoutes/auth.routes.js";
 app.use("/api/auth", authRoutes);
 
 
+import userRoutes from "./Routes/protectedRoute/user.routes.js";
+app.use("/api/users", userRoutes);
+
+
 app.get("/", (req, res) => {
   res.json({
     message: "Techlink API is running",

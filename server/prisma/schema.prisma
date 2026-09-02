@@ -16,4 +16,20 @@ model User {
   phoneVerified Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  otpVerifications OtpVerification[]
+}
+
+model OtpVerification {
+  id         String    @id @default(uuid())
+  userId     String
+  sessionId  String
+  expiresAt  DateTime
+  verifiedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([sessionId])
 }
