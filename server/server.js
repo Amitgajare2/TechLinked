@@ -19,7 +19,12 @@ app.use("/api/auth", authRoutes);
 import userRoutes from "./Routes/protectedRoute/user.routes.js";
 app.use("/api/users", userRoutes);
 
+import profileRoutes from "./Routes/User/profile.routes.js";
+app.use("/api/profile", profileRoutes);
 
+app.use("/Uploads", express.static("uploads"));
+
+  
 app.get("/", (req, res) => {
   res.json({
     message: "Techlink API is running",
