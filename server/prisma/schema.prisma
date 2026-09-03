@@ -8,7 +8,7 @@ datasource db {
 
 model User {
   id            String   @id @default(uuid())
-  FirstName          String
+  FirstName     String
   LastName      String
   email         String   @unique
   phone         String   @unique
@@ -18,7 +18,22 @@ model User {
   updatedAt     DateTime @updatedAt
 
   otpVerifications OtpVerification[]
+  refreshTokens    RefreshToken[]
 }
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 
 model OtpVerification {
   id         String    @id @default(uuid())

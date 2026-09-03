@@ -5,9 +5,12 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
+import cookieParser from "cookie-parser";
+
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 
 import authRoutes from "./Routes/authRoutes/auth.routes.js";
 app.use("/api/auth", authRoutes);

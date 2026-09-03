@@ -2,11 +2,20 @@ import argon2 from "argon2";
 import prisma from "../../Database/prisma.js";
 import { registerSchema } from "../../Validators/auth.validator.js";
 import { loginSchema } from "../../Schemas/auth.schema.js";
-import { generateAccessToken } from "../../Utils/jwt.js"
+import {
+  generateAccessToken, generateRefreshToken,
+  verifyRefreshToken,
+} from "../../Utils/jwt.js"
+
 import {
   sendOtp as send2FactorOtp,
   verifyOtp as verify2FactorOtp,
 } from "../../Services/2factor.service.js";
+
+import {
+  hashRefreshToken,
+  verifyRefreshTokenHash,
+} from "../../Utils/refreshToken.js";
 
 
 export const register = async (req, res, next) => {
@@ -103,7 +112,7 @@ export const sendOtp = async (req, res, next) => {
       });
     }
 
-    // Send OTP through 2Factor
+    // Send OTP 
     const result = await send2FactorOtp(phone);
 
     // 2Factor returns the session ID in Details
@@ -245,7 +254,7 @@ export const verifyOtp = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    // 1. Validate request body
+    // Validate request body
     const result = loginSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -258,14 +267,13 @@ export const login = async (req, res, next) => {
 
     const { email, password } = result.data;
 
-    // 2. Find user
+
     const user = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    // 3. Don't reveal whether phone exists
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -273,7 +281,7 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // 4. Check phone verification
+    //  Check phone verification
     if (!user.phoneVerified) {
       return res.status(403).json({
         success: false,
@@ -281,7 +289,7 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // 5. Verify password
+    //  Verify password
     const passwordValid = await argon2.verify(
       user.passwordHash,
       password
@@ -294,10 +302,34 @@ export const login = async (req, res, next) => {
       });
     }
 
-    // 6. Generate JWT
+    //  Generate JWT
     const accessToken = generateAccessToken(user);
 
-    // 7. Return response
+    const refreshToken = generateRefreshToken(user);
+
+    const refreshTokenHash =
+      await hashRefreshToken(refreshToken);
+
+    await prisma.refreshToken.create({
+      data: {
+        userId: user.id,
+        tokenHash: refreshTokenHash,
+        expiresAt: new Date(
+          Date.now() + 7 * 24 * 60 * 60 * 1000
+        ),
+      },
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite:
+        process.env.NODE_ENV === "production"
+          ? "none"
+          : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
     return res.status(200).json({
       success: true,
       message: "Login successful",
@@ -311,6 +343,205 @@ export const login = async (req, res, next) => {
         },
         accessToken,
       },
+    });
+
+
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const refreshAccessToken = async (req, res, next) => {
+  try {
+    const oldRefreshToken = req.cookies.refreshToken;
+
+    if (!oldRefreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: "Refresh token is required",
+      });
+    }
+
+    // Verify refresh token JWT
+    let decoded;
+
+    try {
+      decoded = verifyRefreshToken(oldRefreshToken);
+    } catch {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired refresh token",
+      });
+    }
+
+    // Make sure this is a refresh token
+    if (decoded.tokenType !== "refresh") {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid refresh token",
+      });
+    }
+
+    const refreshTokens = await prisma.refreshToken.findMany({
+      where: {
+        userId: decoded.userId,
+        revokedAt: null,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+    });
+
+    let matchedToken = null;
+
+    for (const storedToken of refreshTokens) {
+      const isMatch = await verifyRefreshTokenHash(
+        oldRefreshToken,
+        storedToken.tokenHash
+      );
+
+      if (isMatch) {
+        matchedToken = storedToken;
+        break;
+      }
+    }
+
+
+    if (!matchedToken) {
+      await prisma.refreshToken.updateMany({
+        where: {
+          userId: decoded.userId,
+          revokedAt: null,
+        },
+        data: {
+          revokedAt: new Date(),
+        },
+      });
+
+      return res.status(401).json({
+        success: false,
+        message:
+          "Refresh token reuse detected. Please login again.",
+      });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: {
+        id: decoded.userId,
+      },
+    });
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+  
+    const newAccessToken = generateAccessToken(user);
+    const newRefreshToken = generateRefreshToken(user);
+
+    const newRefreshTokenHash =
+      await hashRefreshToken(newRefreshToken);
+
+    await prisma.$transaction([
+      prisma.refreshToken.update({
+        where: {
+          id: matchedToken.id,
+        },
+        data: {
+          revokedAt: new Date(),
+        },
+      }),
+
+      prisma.refreshToken.create({
+        data: {
+          userId: user.id,
+          tokenHash: newRefreshTokenHash,
+          expiresAt: new Date(
+            Date.now() + 7 * 24 * 60 * 60 * 1000
+          ),
+        },
+      }),
+    ]);
+
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite:
+        process.env.NODE_ENV === "production"
+          ? "none"
+          : "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+  
+    return res.status(200).json({
+      success: true,
+      message: "Access token refreshed successfully",
+      data: {
+        accessToken: newAccessToken,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+export const logout = async (req, res, next) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (refreshToken) {
+      try {
+        const decoded = verifyRefreshToken(refreshToken);
+
+        const refreshTokens =
+          await prisma.refreshToken.findMany({
+            where: {
+              userId: decoded.userId,
+              revokedAt: null,
+            },
+          });
+
+        for (const storedToken of refreshTokens) {
+          const isMatch = await verifyRefreshTokenHash(
+            refreshToken,
+            storedToken.tokenHash
+          );
+
+          if (isMatch) {
+            await prisma.refreshToken.update({
+              where: {
+                id: storedToken.id,
+              },
+              data: {
+                revokedAt: new Date(),
+              },
+            });
+
+            break;
+          }
+        }
+      } catch {
+      }
+    }
+
+    res.clearCookie("refreshToken", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite:
+        process.env.NODE_ENV === "production"
+          ? "none"
+          : "lax",
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
     });
   } catch (error) {
     next(error);
