@@ -14,6 +14,19 @@ model User {
   phone         String   @unique
   passwordHash  String
   phoneVerified Boolean  @default(false)
+
+  profilePhoto  String?
+  dateOfBirth   DateTime?
+  gender        String?
+  location      String?
+  bio           String?
+  education     String?
+  skills        String?
+  resumeUrl     String?
+  linkedinUrl   String?
+  githubUrl     String?
+  portfolioUrl  String?
+
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
