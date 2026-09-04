@@ -2,63 +2,11 @@
 
 import React, { useState } from "react"
 import { useForm } from "react-hook-form"
-import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { loginSchema, registerSchema } from "@/src/schemas"
+import type { LoginFormData, RegisterFormData } from "@/src/schemas"
 
-
-// ZOD validation
-const loginSchema = z.object({
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Enter a valid email address"),
-
-  password: z
-    .string()
-    .min(1, "Password is required"),
-})
-
-const registerSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(2, "First name must be at least 2 characters")
-      .max(50, "First name is too long"),
-
-    lastName: z
-      .string()
-      .min(2, "Last name must be at least 2 characters")
-      .max(50, "Last name is too long"),
-
-    phone: z
-      .string()
-      .regex(/^[6-9]\d{9}$/, "Enter a valid Indian mobile number"),
-
-    email: z
-      .string()
-      .min(1, "Email is required")
-      .email("Enter a valid email address"),
-
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain an uppercase letter")
-      .regex(/[a-z]/, "Password must contain a lowercase letter")
-      .regex(/[0-9]/, "Password must contain a number"),
-
-    confirmPassword: z
-      .string()
-      .min(1, "Please confirm your password"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  })
-
-type LoginFormData = z.infer<typeof loginSchema>
-type RegisterFormData = z.infer<typeof registerSchema>
-
-function page() {
+export default function Page() {
   const [isRegister, setIsRegister] = useState(false)
   const [showOtp, setShowOtp] = useState(false)
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
@@ -135,7 +83,7 @@ function page() {
             className="text-[3rem] font-bold text-white leading-none"
             style={{ fontFamily: "var(--font-logo)" }}
           >
-            Techlinked
+            Techlinkeed
           </h1>
 
           <p
@@ -154,7 +102,7 @@ function page() {
           {!showOtp && (
             <div className="w-full flex flex-row justify-between items-center gap-2">
               <h2 className="text-[1.1rem] font-bold text-black lg:text-2xl"
-                style={{ fontFamily: "var(--font-logo)" }}>Techlinked</h2>
+                style={{ fontFamily: "var(--font-logo)" }}>Techlinkeed</h2>
 
               <div className="flex items-center gap-2">
                 <p
@@ -480,6 +428,4 @@ function page() {
     </>
   )
 }
-
-export default page
 
