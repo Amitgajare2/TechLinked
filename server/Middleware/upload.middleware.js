@@ -88,3 +88,48 @@ export const uploadProfilePhoto = multer({
     fileSize: 2 * 1024 * 1024,
   },
 });
+
+const postImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadDir = "uploads/posts";
+
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    cb(null, uploadDir);
+  },
+
+  filename: (req, file, cb) => {
+    const uniqueName =
+      `${Date.now()}-${Math.round(Math.random() * 1e9)}` +
+      path.extname(file.originalname);
+
+    cb(null, uniqueName);
+  },
+});
+
+const postImageFileFilter = (req, file, cb) => {
+  const allowedMimeTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+  ];
+
+  if (allowedMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error("Only JPG, PNG and WEBP images are allowed"),
+      false
+    );
+  }
+};
+
+export const uploadPostImage = multer({
+  storage: postImageStorage,
+  fileFilter: postImageFileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
