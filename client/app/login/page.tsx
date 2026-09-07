@@ -1,15 +1,30 @@
 "use client"
 
 import React, { useState } from "react"
+import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { loginSchema, registerSchema } from "@/src/schemas"
 import type { LoginFormData, RegisterFormData } from "@/src/schemas"
+import {
+  login,
+  register,
+  sendOtp,
+  verifyOtp,
+} from "@/src/services/auth.service"
 
 export default function Page() {
+  const router = useRouter()
   const [isRegister, setIsRegister] = useState(false)
   const [showOtp, setShowOtp] = useState(false)
   const [otp, setOtp] = useState(["", "", "", "", "", ""])
+
+  // Stored after successful registration so OTP calls know the phone number
+  const [registeredPhone, setRegisteredPhone] = useState("")
+
+  const [loading, setLoading] = useState(false)
+  const [apiError, setApiError] = useState("")
+  const [apiSuccess, setApiSuccess] = useState("")
 
   // LOGIN 
   const {
@@ -20,11 +35,26 @@ export default function Page() {
     resolver: zodResolver(loginSchema),
   })
 
-  const onLogin = (data: LoginFormData) => {
-    console.log("Login data:", data)
+  const onLogin = async (data: LoginFormData) => {
+    setApiError("")
+    setApiSuccess("")
+    setLoading(true)
+
+    try {
+      const res = await login({ email: data.email, password: data.password })
+      localStorage.setItem("accessToken", res.data.accessToken)
+      localStorage.setItem("firstName", res.data.user.firstName)
+      router.push("/home")
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message || "Login failed. Please try again."
+      setApiError(msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
-  // REGISTE
+  //  REGISTER form 
   const {
     register: registerField,
     handleSubmit: handleRegisterSubmit,
@@ -33,13 +63,38 @@ export default function Page() {
     resolver: zodResolver(registerSchema),
   })
 
-  const onRegister = (data: RegisterFormData) => {
-    console.log("Register data:", data)
-    // Registration details are valid, so show the OTP verification step.
-    setShowOtp(true)
-    setOtp(["", "", "", "", "", ""])
+  const onRegister = async (data: RegisterFormData) => {
+    setApiError("")
+    setApiSuccess("")
+    setLoading(true)
+
+    try {
+      // 1. Register the user
+      await register({
+        FirstName: data.firstName,
+        LastName: data.lastName,
+        email: data.email,
+        phone: data.phone,
+        password: data.password,
+      })
+
+      // 2. Immediately send OTP to the registered phone
+      await sendOtp(data.phone)
+
+      setRegisteredPhone(data.phone)
+      setOtp(["", "", "", "", "", ""])
+      setShowOtp(true)
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ||
+        "Registration failed. Please try again."
+      setApiError(msg)
+    } finally {
+      setLoading(false)
+    }
   }
 
+  // OTP handlers 
   const handleOtpChange = (index: number, value: string) => {
     const digit = value.replace(/\D/g, "").slice(-1)
     const nextOtp = [...otp]
@@ -51,7 +106,10 @@ export default function Page() {
     }
   }
 
-  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleOtpKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === "Backspace" && !otp[index] && index > 0) {
       document.getElementById(`otp-${index - 1}`)?.focus()
     }
@@ -66,11 +124,57 @@ export default function Page() {
     document.getElementById(`otp-${Math.min(pasted.length, 6) - 1}`)?.focus()
   }
 
-  const handleVerifyOtp = (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault()
     const code = otp.join("")
     if (code.length !== 6) return
-    console.log("OTP verified:", code)
+
+    setApiError("")
+    setApiSuccess("")
+    setLoading(true)
+
+    try {
+      await verifyOtp(registeredPhone, code)
+      setApiSuccess(
+        "Phone verified! You can now sign in."
+      )
+      // Go back to login view
+      setShowOtp(false)
+      setIsRegister(false)
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ||
+        "OTP verification failed. Please try again."
+      setApiError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleResendOtp = async () => {
+    if (!registeredPhone) return
+    setApiError("")
+    setApiSuccess("")
+    setLoading(true)
+
+    try {
+      await sendOtp(registeredPhone)
+      setApiSuccess("OTP resent successfully.")
+    } catch (err: unknown) {
+      const msg =
+        (err as { message?: string })?.message ||
+        "Failed to resend OTP. Please try again."
+      setApiError(msg)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Clear feedback when switching modes
+  const switchMode = () => {
+    setIsRegister((v) => !v)
+    setApiError("")
+    setApiSuccess("")
   }
 
   return (
@@ -101,13 +205,18 @@ export default function Page() {
         <div className="w-full h-auto flex flex-col bg-white px-3 py-2 lg:w-3/5 lg:h-full lg:py-2.5 lg:px-1">
           {!showOtp && (
             <div className="w-full flex flex-row justify-between items-center gap-2">
-              <h2 className="text-[1.1rem] font-bold text-black lg:text-2xl"
-                style={{ fontFamily: "var(--font-logo)" }}>Techlinkeed</h2>
+              <h2
+                className="text-[1.1rem] font-bold text-black lg:text-2xl"
+                style={{ fontFamily: "var(--font-logo)" }}
+              >
+                Techlinkeed
+              </h2>
 
               <div className="flex items-center gap-2">
                 <p
                   className="text-gray-500 text-[0.7rem] lg:text-sm"
-                  style={{ fontFamily: "var(--font-body)" }}>
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
                   {isRegister
                     ? "Already have an account?"
                     : "Need an account?"}
@@ -115,12 +224,12 @@ export default function Page() {
 
                 <button
                   type="button"
-                  onClick={() => setIsRegister(!isRegister)}
+                  onClick={switchMode}
                   className="border border-gray-500/20 text-black font-bold px-4 py-2 rounded-md hover:bg-gray-100 transition text-[0.6rem] lg:text-sm"
-                  style={{ fontFamily: "var(--font-body)" }}>
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
                   {isRegister ? "Sign in" : "Register"}
                 </button>
-
               </div>
             </div>
           )}
@@ -128,22 +237,43 @@ export default function Page() {
           {/* AUTH */}
           <div className="w-full h-full flex flex-col gap-2 mt-4 justify-center items-center">
 
+            {/* Global feedback banner */}
+            {apiError && (
+              <p
+                className="w-full max-w-md text-red-600 text-xs bg-red-50 border border-red-200 rounded-md px-3 py-2"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {apiError}
+              </p>
+            )}
+
+            {apiSuccess && (
+              <p
+                className="w-full max-w-md text-green-700 text-xs bg-green-50 border border-green-200 rounded-md px-3 py-2"
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {apiSuccess}
+              </p>
+            )}
+
             {!isRegister ? (
 
-              /* login */
+              /* ── LOGIN ──────────────────────────────────────────────────── */
               <form
                 onSubmit={handleLoginSubmit(onLogin)}
                 className="w-full flex flex-col items-center"
               >
                 <h3
                   className="lg:text-xl text-[1rem] font-bold text-black"
-                  style={{ fontFamily: "var(--font-body)" }}>
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
                   Sign in to your account
                 </h3>
 
                 <p
                   className="text-gray-500 lg:text-sm text-[0.6rem] text-center"
-                  style={{ fontFamily: "var(--font-body)" }}>
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
                   Enter your registered email and password to sign in to your
                   account
                 </p>
@@ -155,11 +285,10 @@ export default function Page() {
                     type="email"
                     placeholder="Email address"
                     className={`border ${
-                      loginErrors.email
-                        ? "border-red-400"
-                        : "border-gray-300"
+                      loginErrors.email ? "border-red-400" : "border-gray-300"
                     } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
-                    style={{ fontFamily: "var(--font-body)" }}/>
+                    style={{ fontFamily: "var(--font-body)" }}
+                  />
 
                   {loginErrors.email && (
                     <p className="text-red-500 text-xs px-1">
@@ -173,11 +302,10 @@ export default function Page() {
                     type="password"
                     placeholder="Enter password"
                     className={`border ${
-                      loginErrors.password
-                        ? "border-red-400"
-                        : "border-gray-300"
+                      loginErrors.password ? "border-red-400" : "border-gray-300"
                     } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md mt-2 transition`}
-                    style={{ fontFamily: "var(--font-body)" }}/>
+                    style={{ fontFamily: "var(--font-body)" }}
+                  />
 
                   {loginErrors.password && (
                     <p className="text-red-500 text-xs px-1">
@@ -188,29 +316,35 @@ export default function Page() {
 
                 <button
                   type="submit"
-                  className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-4 w-full max-w-md"
-                  style={{ fontFamily: "var(--font-body)" }}>
-                  Sign in with Email
+                  disabled={loading}
+                  className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-4 w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {loading ? "Signing in…" : "Sign in with Email"}
                 </button>
               </form>
 
             ) : (
 
-              /* OTP */
+              /* ── OTP STEP ───────────────────────────────────────────────── */
               showOtp ? (
                 <form
                   onSubmit={handleVerifyOtp}
-                  className="w-full flex flex-col items-center">
+                  className="w-full flex flex-col items-center"
+                >
                   <h3
                     className="lg:text-xl text-[1rem] font-bold text-black"
-                    style={{ fontFamily: "var(--font-body)" }}>
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
                     Verify your account
                   </h3>
 
                   <p
                     className="text-gray-500 lg:text-sm text-[0.6rem] text-center mt-1"
-                    style={{ fontFamily: "var(--font-body)" }}>
-                    Enter the 6-digit OTP sent to your email</p>
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    Enter the 6-digit OTP sent to +91{registeredPhone}
+                  </p>
 
                   <div className="flex items-center justify-center gap-2 mt-5">
                     {otp.map((digit, index) => (
@@ -227,205 +361,233 @@ export default function Page() {
                         onKeyDown={(e) => handleOtpKeyDown(index, e)}
                         onPaste={handleOtpPaste}
                         className="w-10 h-11 lg:w-12 lg:h-12 border border-gray-300 rounded-md text-center text-lg font-bold text-black focus:outline-none focus:ring-2 focus:ring-gray-500/20 focus:border-gray-500 transition"
-                        style={{ fontFamily: "var(--font-body)" }}/>
+                        style={{ fontFamily: "var(--font-body)" }}
+                      />
                     ))}
                   </div>
 
                   <button
                     type="submit"
-                    disabled={otp.join("").length !== 6}
+                    disabled={otp.join("").length !== 6 || loading}
                     className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-5 w-full max-w-md disabled:opacity-40 disabled:cursor-not-allowed"
-                    style={{ fontFamily: "var(--font-body)" }}>
-                    Verify OTP
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    {loading ? "Verifying…" : "Verify OTP"}
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => setShowOtp(false)}
-                    className="text-gray-500 text-xs mt-3 hover:text-black transition"
-                    style={{ fontFamily: "var(--font-body)" }}>
+                    onClick={handleResendOtp}
+                    disabled={loading}
+                    className="text-gray-500 text-xs mt-3 hover:text-black transition disabled:opacity-50"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    Resend OTP
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowOtp(false)
+                      setApiError("")
+                      setApiSuccess("")
+                    }}
+                    className="text-gray-400 text-xs mt-1.5 hover:text-black transition"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
                     Back to registration
                   </button>
                 </form>
+
               ) : (
-              <form
-                onSubmit={handleRegisterSubmit(onRegister)}
-                className="w-full flex flex-col items-center">
-                <h3
-                  className="lg:text-xl text-[1rem] font-bold text-black"
-                  style={{ fontFamily: "var(--font-body)" }}>
-                  Create your account
-                </h3>
 
-                <p
-                  className="text-gray-500 lg:text-sm text-[0.6rem] text-center"
-                  style={{ fontFamily: "var(--font-body)" }}>
-                  Create an account to get started with Techlinked
-                </p>
+                /* ── REGISTER ─────────────────────────────────────────────── */
+                <form
+                  onSubmit={handleRegisterSubmit(onRegister)}
+                  className="w-full flex flex-col items-center"
+                >
+                  <h3
+                    className="lg:text-xl text-[1rem] font-bold text-black"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    Create your account
+                  </h3>
 
-                <div className="w-full max-w-md flex flex-col gap-1 mt-4">
-                  {/* FIRST $ LAST NAME */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <input
-                        {...registerField("firstName")}
-                        type="text"
-                        placeholder="First name"
-                        className={`w-full border ${
-                          registerErrors.firstName
+                  <p
+                    className="text-gray-500 lg:text-sm text-[0.6rem] text-center"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    Create an account to get started with Techlinked
+                  </p>
+
+                  <div className="w-full max-w-md flex flex-col gap-1 mt-4">
+                    {/* FIRST & LAST NAME */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <input
+                          {...registerField("firstName")}
+                          type="text"
+                          placeholder="First name"
+                          className={`w-full border ${
+                            registerErrors.firstName
+                              ? "border-red-400"
+                              : "border-gray-300"
+                          } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
+                          style={{ fontFamily: "var(--font-body)" }}
+                        />
+
+                        {registerErrors.firstName && (
+                          <p className="text-red-500 text-xs px-1 mt-1">
+                            {registerErrors.firstName.message}
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <input
+                          {...registerField("lastName")}
+                          type="text"
+                          placeholder="Last name"
+                          className={`w-full border ${
+                            registerErrors.lastName
+                              ? "border-red-400"
+                              : "border-gray-300"
+                          } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
+                          style={{ fontFamily: "var(--font-body)" }}
+                        />
+
+                        {registerErrors.lastName && (
+                          <p className="text-red-500 text-xs px-1 mt-1">
+                            {registerErrors.lastName.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* PHONE */}
+                    <div className="mt-2">
+                      <div
+                        className={`flex items-center border ${
+                          registerErrors.phone
                             ? "border-red-400"
                             : "border-gray-300"
-                        } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
-                        style={{ fontFamily: "var(--font-body)" }}/>
+                        } focus-within:ring-2 focus-within:ring-gray-500/15 rounded-md overflow-hidden transition`}
+                      >
+                        <span
+                          className="px-3 text-sm text-gray-500 border-r border-gray-200 bg-gray-50 py-2.5"
+                          style={{ fontFamily: "var(--font-body)" }}
+                        >
+                          +91
+                        </span>
 
-                      {registerErrors.firstName && (
+                        <input
+                          {...registerField("phone")}
+                          type="tel"
+                          inputMode="numeric"
+                          maxLength={10}
+                          placeholder="Mobile number"
+                          className="w-full focus:outline-none text-sm py-2.5 px-3"
+                          style={{ fontFamily: "var(--font-body)" }}
+                          onInput={(e) => {
+                            e.currentTarget.value =
+                              e.currentTarget.value.replace(/\D/g, "")
+                          }}
+                        />
+                      </div>
+
+                      {registerErrors.phone && (
                         <p className="text-red-500 text-xs px-1 mt-1">
-                          {registerErrors.firstName.message}
+                          {registerErrors.phone.message}
                         </p>
                       )}
                     </div>
 
-                    <div>
+                    {/* EMAIL */}
+                    <div className="mt-2">
                       <input
-                        {...registerField("lastName")}
-                        type="text"
-                        placeholder="Last name"
+                        {...registerField("email")}
+                        type="email"
+                        placeholder="Email address"
                         className={`w-full border ${
-                          registerErrors.lastName
+                          registerErrors.email
                             ? "border-red-400"
                             : "border-gray-300"
                         } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
-                        style={{ fontFamily: "var(--font-body)" }}/>
-
-                      {registerErrors.lastName && (
-                        <p className="text-red-500 text-xs px-1 mt-1">
-                          {registerErrors.lastName.message}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* PHONE */}
-                  <div className="mt-2">
-                    <div
-                      className={`flex items-center border ${
-                        registerErrors.phone
-                          ? "border-red-400"
-                          : "border-gray-300"
-                      } focus-within:ring-2 focus-within:ring-gray-500/15 rounded-md overflow-hidden transition`}>
-
-                      <span
-                        className="px-3 text-sm text-gray-500 border-r border-gray-200 bg-gray-50 py-2.5"
-                        style={{ fontFamily: "var(--font-body)" }}>+91</span>
-
-                      <input
-                        {...registerField("phone")}
-                        type="tel"
-                        inputMode="numeric"
-                        maxLength={10}
-                        placeholder="Mobile number"
-                        className="w-full focus:outline-none text-sm py-2.5 px-3"
                         style={{ fontFamily: "var(--font-body)" }}
-                        onInput={(e) => {
-                          e.currentTarget.value =
-                            e.currentTarget.value.replace(/\D/g, "")
-                        }}/>
+                      />
+
+                      {registerErrors.email && (
+                        <p className="text-red-500 text-xs px-1 mt-1">
+                          {registerErrors.email.message}
+                        </p>
+                      )}
                     </div>
 
-                    {registerErrors.phone && (
-                      <p className="text-red-500 text-xs px-1 mt-1">
-                        {registerErrors.phone.message}
-                      </p>
-                    )}
+                    {/* PASSWORD */}
+                    <div className="mt-2">
+                      <input
+                        {...registerField("password")}
+                        type="password"
+                        placeholder="Create password"
+                        className={`w-full border ${
+                          registerErrors.password
+                            ? "border-red-400"
+                            : "border-gray-300"
+                        } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
+                        style={{ fontFamily: "var(--font-body)" }}
+                      />
 
+                      {registerErrors.password && (
+                        <p className="text-red-500 text-xs px-1 mt-1">
+                          {registerErrors.password.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* CONFIRM PASSWORD */}
+                    <div className="mt-2">
+                      <input
+                        {...registerField("confirmPassword")}
+                        type="password"
+                        placeholder="Confirm password"
+                        className={`w-full border ${
+                          registerErrors.confirmPassword
+                            ? "border-red-400"
+                            : "border-gray-300"
+                        } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
+                        style={{ fontFamily: "var(--font-body)" }}
+                      />
+
+                      {registerErrors.confirmPassword && (
+                        <p className="text-red-500 text-xs px-1 mt-1">
+                          {registerErrors.confirmPassword.message}
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  {/* EMAIL */}
-                  <div className="mt-2">
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-4 w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    {loading ? "Creating account…" : "Create account"}
+                  </button>
 
-                    <input
-                      {...registerField("email")}
-                      type="email"
-                      placeholder="Email address"
-                      className={`w-full border ${
-                        registerErrors.email
-                          ? "border-red-400"
-                          : "border-gray-300"
-                      } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
-                      style={{ fontFamily: "var(--font-body)" }}/>
-
-                    {registerErrors.email && (
-                      <p className="text-red-500 text-xs px-1 mt-1">
-                        {registerErrors.email.message}
-                      </p>
-                    )}
-
-                  </div>
-
-                  {/* PASS */}
-                  <div className="mt-2">
-
-                    <input
-                      {...registerField("password")}
-                      type="password"
-                      placeholder="Create password"
-                      className={`w-full border ${
-                        registerErrors.password
-                          ? "border-red-400"
-                          : "border-gray-300"
-                      } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
-                      style={{ fontFamily: "var(--font-body)" }}/>
-
-                    {registerErrors.password && (
-                      <p className="text-red-500 text-xs px-1 mt-1">
-                        {registerErrors.password.message}
-                      </p>
-                    )}
-
-                  </div>
-
-                  {/* CONFIRM PASS */}
-                  <div className="mt-2">
-
-                    <input
-                      {...registerField("confirmPassword")}
-                      type="password"
-                      placeholder="Confirm password"
-                      className={`w-full border ${
-                        registerErrors.confirmPassword
-                          ? "border-red-400"
-                          : "border-gray-300"
-                      } focus:outline-none text-sm focus:ring-2 focus:ring-gray-500/15 py-2.5 px-4 rounded-md transition`}
-                      style={{ fontFamily: "var(--font-body)" }}/>
-
-                    {registerErrors.confirmPassword && (
-                      <p className="text-red-500 text-xs px-1 mt-1">
-                        {registerErrors.confirmPassword.message}
-                      </p>
-                    )}
-
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-4 w-full max-w-md"
-                  style={{ fontFamily: "var(--font-body)" }}>Create account</button>
-
-                <p className="text-gray-400 text-[0.6rem] lg:text-xs text-center max-w-md mt-2"
-                  style={{ fontFamily: "var(--font-body)" }}>
-                  By creating an account, you agree to our terms and privacy
-                  policy.
-                </p>
-
-              </form>
+                  <p
+                    className="text-gray-400 text-[0.6rem] lg:text-xs text-center max-w-md mt-2"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    By creating an account, you agree to our terms and privacy
+                    policy.
+                  </p>
+                </form>
               )
             )}
-
           </div>
         </div>
       </div>
     </>
   )
 }
-
