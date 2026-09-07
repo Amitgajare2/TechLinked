@@ -69,19 +69,21 @@ export default function Page() {
     setLoading(true)
 
     try {
+      const fullPhone = `+91${data.phone}`
+
       // 1. Register the user
       await register({
         FirstName: data.firstName,
         LastName: data.lastName,
         email: data.email,
-        phone: data.phone,
+        phone: fullPhone,
         password: data.password,
       })
 
       // 2. Immediately send OTP to the registered phone
-      await sendOtp(data.phone)
+      await sendOtp(fullPhone)
 
-      setRegisteredPhone(data.phone)
+      setRegisteredPhone(fullPhone)
       setOtp(["", "", "", "", "", ""])
       setShowOtp(true)
     } catch (err: unknown) {
@@ -343,7 +345,7 @@ export default function Page() {
                     className="text-gray-500 lg:text-sm text-[0.6rem] text-center mt-1"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    Enter the 6-digit OTP sent to +91{registeredPhone}
+                    Enter the 6-digit OTP sent to {registeredPhone}
                   </p>
 
                   <div className="flex items-center justify-center gap-2 mt-5">
