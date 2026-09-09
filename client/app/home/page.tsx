@@ -1,70 +1,21 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { logout } from "@/src/services/auth.service"
-import { getAccessToken, clearAccessToken, setAccessToken } from "@/src/lib/token"
-import { refreshAccessToken } from "@/src/services/auth.service"
-import { apiRequest } from "@/src/lib/api"
-
-interface ProfileResponse {
-  success: boolean
-  data: {
-    FirstName: string
-    LastName: string
-  }
-}
+import { useAuth } from "@/src/context/AuthContext"
 
 export default function HomePage() {
   const router = useRouter()
-  const [firstName, setFirstName] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [checking, setChecking] = useState(true)
+  const { user, initializing, logoutLoading, logout } = useAuth()
 
+  // Redirect to login if not authenticated
   useEffect(() => {
-    const init = async () => {
-      let token = getAccessToken()
-
-      // No in-memory token — try to silently refresh via the httpOnly cookie
-      if (!token) {
-        try {
-          const res = await refreshAccessToken()
-          setAccessToken(res.data.accessToken)
-          token = res.data.accessToken
-        } catch {
-          router.replace("/login")
-          return
-        }
-      }
-
-      // Fetch the user's name from the server — don't trust localStorage
-      try {
-        const profile = await apiRequest<ProfileResponse>("/api/profile")
-        setFirstName(profile.data.FirstName)
-      } catch {
-        // Profile fetch failed but token is valid — show fallback
-        setFirstName("User")
-      } finally {
-        setChecking(false)
-      }
-    }
-
-    init()
-  }, [router])
-
-  const handleLogout = async () => {
-    setLoading(true)
-    try {
-      await logout()
-    } catch {
-      // Even if the server call fails, clear local state
-    } finally {
-      clearAccessToken()
+    if (!initializing && !user) {
       router.replace("/login")
     }
-  }
+  }, [user, initializing, router])
 
-  if (checking) {
+  if (initializing) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-400 text-sm">Loading…</p>
@@ -72,15 +23,17 @@ export default function HomePage() {
     )
   }
 
+  if (!user) return null
+
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4">
-      <p className="text-2xl font-semibold">Hello, {firstName}!</p>
+      <p className="text-2xl font-semibold">Hello, {user.firstName}!</p>
       <button
-        onClick={handleLogout}
-        disabled={loading}
+        onClick={logout}
+        disabled={logoutLoading}
         className="px-4 py-2 bg-black text-white text-sm font-semibold rounded-md hover:bg-gray-800 transition disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {loading ? "Logging out…" : "Logout"}
+        {logoutLoading ? "Logging out…" : "Logout"}
       </button>
     </div>
   )

@@ -1,6 +1,5 @@
 import { getAccessToken } from "@/src/lib/token"
 
-// Omit body from RequestInit so we can redefine it as a plain object
 interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: object | null
 }
