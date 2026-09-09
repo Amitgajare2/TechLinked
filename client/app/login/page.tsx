@@ -23,7 +23,14 @@ export default function Page() {
   // Stored after successful registration so OTP calls know the phone number
   const [registeredPhone, setRegisteredPhone] = useState("")
 
-  const [loading, setLoading] = useState(false)
+  // Separate loading states so one request can't block another form
+  const [loginLoading, setLoginLoading] = useState(false)
+  const [registerLoading, setRegisterLoading] = useState(false)
+  const [otpLoading, setOtpLoading] = useState(false)
+
+  // Resend cooldown — prevents spamming the OTP endpoint
+  const [resendCooldown, setResendCooldown] = useState(0)
+
   const [apiError, setApiError] = useState("")
   const [apiSuccess, setApiSuccess] = useState("")
 
@@ -33,6 +40,13 @@ export default function Page() {
       router.replace("/home")
     }
   }, [router])
+
+  // Resend cooldown timer
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const timer = setTimeout(() => setResendCooldown((v) => v - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [resendCooldown])
 
   // LOGIN 
   const {
@@ -46,19 +60,18 @@ export default function Page() {
   const onLogin = async (data: LoginFormData) => {
     setApiError("")
     setApiSuccess("")
-    setLoading(true)
+    setLoginLoading(true)
 
     try {
       const res = await login({ email: data.email, password: data.password })
-      // Store token in memory only — never in localStorage
       setAccessToken(res.data.accessToken)
       router.push("/home")
     } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message || "Login failed. Please try again."
-      setApiError(msg)
+      const msg = (err as { message?: string })?.message || "Login failed. Please try again."
+      // Cap message length to prevent UI flooding from oversized server responses
+      setApiError(msg.slice(0, 200))
     } finally {
-      setLoading(false)
+      setLoginLoading(false)
     }
   }
 
@@ -74,12 +87,12 @@ export default function Page() {
   const onRegister = async (data: RegisterFormData) => {
     setApiError("")
     setApiSuccess("")
-    setLoading(true)
+    setRegisterLoading(true)
+
+    const fullPhone = `+91${data.phone}`
 
     try {
-      const fullPhone = `+91${data.phone}`
-
-      // 1. Register the user
+      // Step 1: register — if this fails, user doesn't exist yet, show error normally
       await register({
         FirstName: data.firstName,
         LastName: data.lastName,
@@ -87,21 +100,26 @@ export default function Page() {
         phone: fullPhone,
         password: data.password,
       })
-
-      // 2. Immediately send OTP to the registered phone
-      await sendOtp(fullPhone)
-
-      setRegisteredPhone(fullPhone)
-      setOtp(["", "", "", "", "", ""])
-      setShowOtp(true)
     } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ||
-        "Registration failed. Please try again."
-      setApiError(msg)
-    } finally {
-      setLoading(false)
+      const msg = (err as { message?: string })?.message || "Registration failed. Please try again."
+      setApiError(msg.slice(0, 200))
+      setRegisterLoading(false)
+      return
     }
+
+    try {
+      // Step 2: send OTP — register succeeded, so show OTP screen regardless
+      // Even if sendOtp fails here, user is registered and can use resend
+      await sendOtp(fullPhone)
+    } catch {
+      // Non-fatal — OTP send failed but user is registered; they can resend
+    }
+
+    setRegisteredPhone(fullPhone)
+    setOtp(["", "", "", "", "", ""])
+    setResendCooldown(30)
+    setShowOtp(true)
+    setRegisterLoading(false)
   }
 
   // OTP handlers 
@@ -149,42 +167,36 @@ export default function Page() {
 
     setApiError("")
     setApiSuccess("")
-    setLoading(true)
+    setOtpLoading(true)
 
     try {
       await verifyOtp(registeredPhone, code)
-      setApiSuccess(
-        "Phone verified! You can now sign in."
-      )
-      // Go back to login view
+      setApiSuccess("Phone verified! You can now sign in.")
       setShowOtp(false)
       setIsRegister(false)
     } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ||
-        "OTP verification failed. Please try again."
-      setApiError(msg)
+      const msg = (err as { message?: string })?.message || "OTP verification failed. Please try again."
+      setApiError(msg.slice(0, 200))
     } finally {
-      setLoading(false)
+      setOtpLoading(false)
     }
   }
 
   const handleResendOtp = async () => {
-    if (!registeredPhone) return
+    if (!registeredPhone || resendCooldown > 0) return
     setApiError("")
     setApiSuccess("")
-    setLoading(true)
+    setOtpLoading(true)
 
     try {
       await sendOtp(registeredPhone)
       setApiSuccess("OTP resent successfully.")
+      setResendCooldown(30)
     } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ||
-        "Failed to resend OTP. Please try again."
-      setApiError(msg)
+      const msg = (err as { message?: string })?.message || "Failed to resend OTP. Please try again."
+      setApiError(msg.slice(0, 200))
     } finally {
-      setLoading(false)
+      setOtpLoading(false)
     }
   }
 
@@ -337,11 +349,11 @@ export default function Page() {
 
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loginLoading}
                   className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-4 w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
-                  {loading ? "Signing in…" : "Sign in with Email"}
+                  {loginLoading ? "Signing in…" : "Sign in with Email"}
                 </button>
               </form>
 
@@ -389,27 +401,29 @@ export default function Page() {
 
                   <button
                     type="submit"
-                    disabled={otp.join("").length !== 6 || loading}
+                    disabled={otp.join("").length !== 6 || otpLoading}
                     className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-5 w-full max-w-md disabled:opacity-40 disabled:cursor-not-allowed"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    {loading ? "Verifying…" : "Verify OTP"}
+                    {otpLoading ? "Verifying…" : "Verify OTP"}
                   </button>
 
                   <button
                     type="button"
                     onClick={handleResendOtp}
-                    disabled={loading}
-                    className="text-gray-500 text-xs mt-3 hover:text-black transition disabled:opacity-50"
+                    disabled={otpLoading || resendCooldown > 0}
+                    className="text-gray-500 text-xs mt-3 hover:text-black transition disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    Resend OTP
+                    {resendCooldown > 0 ? `Resend OTP (${resendCooldown}s)` : "Resend OTP"}
                   </button>
 
                   <button
                     type="button"
                     onClick={() => {
                       setShowOtp(false)
+                      setRegisteredPhone("")
+                      setOtp(["", "", "", "", "", ""])
                       setApiError("")
                       setApiSuccess("")
                     }}
@@ -589,11 +603,11 @@ export default function Page() {
 
                   <button
                     type="submit"
-                    disabled={loading}
+                    disabled={registerLoading}
                     className="bg-black text-white font-bold text-sm px-4 py-2.5 rounded-md hover:bg-gray-800 transition mt-4 w-full max-w-md disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    {loading ? "Creating account…" : "Create account"}
+                    {registerLoading ? "Creating account…" : "Create account"}
                   </button>
 
                   <p
