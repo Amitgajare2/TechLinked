@@ -227,10 +227,7 @@ export default function Page() {
             className="text-white text-sm mt-4 leading-relaxed max-w-lg"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Lorem ipsum dolor sit, amet consectetur adipisicing elit.
-            Dolorum quis sequi accusamus non explicabo quo. Nulla fugiat
-            quos repellendus eligendi eaque sequi porro, ipsum cupiditate
-            dignissimos, quas dolorem et doloribus?
+            Techlinkeed is a professional social platform where users can post, share, and build reputation while earning coins. These coins can unlock access to exclusive job interview rounds turning your activity and contribution into real career opportunities. 
           </p>
         </div>
 
