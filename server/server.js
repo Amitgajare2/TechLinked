@@ -1,20 +1,36 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./swagger.js";
+
+import authRoutes from "./Routes/authRoutes/auth.routes.js";
+import userRoutes from "./Routes/protectedRoute/user.routes.js";
+import profileRoutes from "./Routes/User/profile.routes.js";
+
+import postRoutes from "./Routes/postRoutes/post.routes.js";
+import commentRoutes from "./Routes/postRoutes/comment.routes.js";
+import likeRoutes from "./Routes/postRoutes/like.routes.js";
+
+import { startServer } from "./startServer/startServer.js";
 
 dotenv.config();
 
-
 const app = express();
-import cookieParser from "cookie-parser";
 
+// ===============================
+// Middleware
+// ===============================
 
 app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 
-import swaggerUi from "swagger-ui-express";
-import swaggerSpec from "./swagger.js";
+// ===============================
+// Swagger
+// ===============================
 
 app.use(
   "/api-docs",
@@ -22,35 +38,33 @@ app.use(
   swaggerUi.setup(swaggerSpec)
 );
 
-import authRoutes from "./Routes/authRoutes/auth.routes.js";
+// ===============================
+// Routes
+// ===============================
+
 app.use("/api/auth", authRoutes);
 
-
-import userRoutes from "./Routes/protectedRoute/user.routes.js";
 app.use("/api/users", userRoutes);
 
-import profileRoutes from "./Routes/User/profile.routes.js";
 app.use("/api/profile", profileRoutes);
 
 app.use("/Uploads", express.static("uploads"));
 
-import postRoutes from "./Routes/postRoutes/post.routes.js"; 
-import commentRoutes from "./Routes/postRoutes/comment.routes.js"; 
+app.use("/api/posts", postRoutes);
 
-app.use("/api/posts", postRoutes); 
 app.use("/api", commentRoutes);
 
-import likeRoutes from "./Routes/postRoutes/like.routes.js";
 app.use("/api", likeRoutes);
-  
+
+// Health Check
+
+
 app.get("/", (req, res) => {
   res.json({
     message: "Techlink API is running",
   });
 });
 
-const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Server
+startServer(app);

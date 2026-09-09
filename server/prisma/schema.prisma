@@ -7,34 +7,31 @@ datasource db {
 }
 
 model User {
-  id            String  @id @default(uuid())
-  FirstName     String
-  LastName      String
-  email         String  @unique
-  phone         String  @unique
-  passwordHash  String
-  phoneVerified Boolean @default(false)
-
-  profilePhoto String?
-  dateOfBirth  DateTime?
-  gender       String?
-  location     String?
-  bio          String?
-  education    String?
-  skills       String?
-  resumeUrl    String?
-  linkedinUrl  String?
-  githubUrl    String?
-  portfolioUrl String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  otpVerifications OtpVerification[]
-  refreshTokens    RefreshToken[]
-  posts            Post[]
+  id               String            @id @default(uuid())
+  email            String            @unique
+  phone            String            @unique
+  passwordHash     String
+  phoneVerified    Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  FirstName        String
+  LastName         String
+  bio              String?
+  dateOfBirth      DateTime?
+  education        String?
+  gender           String?
+  githubUrl        String?
+  linkedinUrl      String?
+  location         String?
+  portfolioUrl     String?
+  profilePhoto     String?
+  resumeUrl        String?
+  skills           String?
   comments         Comment[]
+  otpVerifications OtpVerification[]
+  posts            Post[]
   postLikes        PostLike[]
+  refreshTokens    RefreshToken[]
 }
 
 model RefreshToken {
@@ -44,8 +41,7 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime  @default(now())
   revokedAt DateTime?
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -53,46 +49,40 @@ model RefreshToken {
 model OtpVerification {
   id         String    @id @default(uuid())
   userId     String
-  sessionId  String
   expiresAt  DateTime
   verifiedAt DateTime?
   createdAt  DateTime  @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId  String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([sessionId])
 }
 
 model Post {
-  id     String @id @default(uuid())
-  userId String
-
-  imageUrl String
-  caption  String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  comments Comment[]
-  likes    PostLike[]
+  id        String     @id @default(uuid())
+  userId    String
+  imageUrl  String
+  caption   String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  comments  Comment[]
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes     PostLike[]
 
   @@index([userId])
   @@index([createdAt])
 }
 
 model Comment {
-  id      String @id @default(uuid())
-  postId  String
-  userId  String
-  content String
-
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([userId])
@@ -104,9 +94,8 @@ model PostLike {
   postId    String
   userId    String
   createdAt DateTime @default(now())
-
-  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
   @@index([postId])
