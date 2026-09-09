@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -12,6 +12,7 @@ import {
   sendOtp,
   verifyOtp,
 } from "@/src/services/auth.service"
+import { setAccessToken, getAccessToken } from "@/src/lib/token"
 
 export default function Page() {
   const router = useRouter()
@@ -25,6 +26,13 @@ export default function Page() {
   const [loading, setLoading] = useState(false)
   const [apiError, setApiError] = useState("")
   const [apiSuccess, setApiSuccess] = useState("")
+
+  // Redirect already-authenticated users away from login page
+  useEffect(() => {
+    if (getAccessToken()) {
+      router.replace("/home")
+    }
+  }, [router])
 
   // LOGIN 
   const {
@@ -42,8 +50,8 @@ export default function Page() {
 
     try {
       const res = await login({ email: data.email, password: data.password })
-      localStorage.setItem("accessToken", res.data.accessToken)
-      localStorage.setItem("firstName", res.data.user.firstName)
+      // Store token in memory only — never in localStorage
+      setAccessToken(res.data.accessToken)
       router.push("/home")
     } catch (err: unknown) {
       const msg =
@@ -126,10 +134,18 @@ export default function Page() {
     document.getElementById(`otp-${Math.min(pasted.length, 6) - 1}`)?.focus()
   }
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: React.SyntheticEvent) => {
     e.preventDefault()
     const code = otp.join("")
     if (code.length !== 6) return
+
+    // Guard: OTP screen must never be reached without a verified phone in state
+    if (!registeredPhone) {
+      setShowOtp(false)
+      setIsRegister(true)
+      setApiError("Session expired. Please register again.")
+      return
+    }
 
     setApiError("")
     setApiSuccess("")
@@ -172,9 +188,12 @@ export default function Page() {
     }
   }
 
-  // Clear feedback when switching modes
+  // Clear feedback and OTP state when switching modes
   const switchMode = () => {
     setIsRegister((v) => !v)
+    setShowOtp(false)
+    setRegisteredPhone("")
+    setOtp(["", "", "", "", "", ""])
     setApiError("")
     setApiSuccess("")
   }
@@ -329,7 +348,7 @@ export default function Page() {
             ) : (
 
               /* ── OTP STEP ───────────────────────────────────────────────── */
-              showOtp ? (
+              showOtp && registeredPhone ? (
                 <form
                   onSubmit={handleVerifyOtp}
                   className="w-full flex flex-col items-center"
@@ -345,7 +364,7 @@ export default function Page() {
                     className="text-gray-500 lg:text-sm text-[0.6rem] text-center mt-1"
                     style={{ fontFamily: "var(--font-body)" }}
                   >
-                    Enter the 6-digit OTP sent to {registeredPhone}
+                    Enter the 6-digit OTP sent to {registeredPhone.replace(/(\+\d{2})\d{6}(\d{4})/, "$1******$2")}
                   </p>
 
                   <div className="flex items-center justify-center gap-2 mt-5">

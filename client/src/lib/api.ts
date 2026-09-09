@@ -1,3 +1,5 @@
+import { getAccessToken } from "@/src/lib/token"
+
 // Omit body from RequestInit so we can redefine it as a plain object
 interface ApiOptions extends Omit<RequestInit, "body"> {
   body?: object | null
@@ -9,12 +11,14 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const { body, headers, ...rest } = options
 
-  // Requests go to /api/* which Next.js proxies to the Express server.
-  // Same-origin means no CORS, and cookies are included automatically.
+  const token = getAccessToken()
+
   const res = await fetch(endpoint, {
-    credentials: "include",
+    credentials: "include", // send httpOnly refresh token cookie
     headers: {
       "Content-Type": "application/json",
+      // Attach access token from memory — never from localStorage
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...(headers as Record<string, string>),
     },
     body: body != null ? JSON.stringify(body) : undefined,
