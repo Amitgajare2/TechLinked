@@ -9,7 +9,12 @@ const app = express();
 import cookieParser from "cookie-parser";
 
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    credentials: true, // allow cookies (refresh token)
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
