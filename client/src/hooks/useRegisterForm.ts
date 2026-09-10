@@ -1,6 +1,6 @@
-import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation } from "@tanstack/react-query"
 import { registerSchema } from "@/src/schemas"
 import type { RegisterFormData } from "@/src/schemas"
 import { register, sendOtp } from "@/src/services/auth.service"
@@ -10,9 +10,6 @@ interface UseRegisterFormOptions {
 }
 
 export function useRegisterForm({ onOtpReady }: UseRegisterFormOptions) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-
   const {
     register: field,
     handleSubmit,
@@ -21,47 +18,41 @@ export function useRegisterForm({ onOtpReady }: UseRegisterFormOptions) {
     resolver: zodResolver(registerSchema),
   })
 
-  const onSubmit = async (data: RegisterFormData) => {
-    setError("")
-    setLoading(true)
+  // Mutation register fail
+  const registerMutation = useMutation({
+    mutationFn: register,
+    onSuccess: async (_, variables) => {
+      // After register succeeds sendOtp 
+      try {
+        await sendOtp(variables.phone)
+      } catch {
+        // User is registered they can resend from OTP screen
+      }
+      onOtpReady(variables.phone)
+    },
+  })
 
+  const onSubmit = handleSubmit((data) => {
     const fullPhone = `+91${data.phone}`
+    registerMutation.mutate({
+      FirstName: data.firstName,
+      LastName: data.lastName,
+      email: data.email,
+      phone: fullPhone,
+      password: data.password,
+    })
+  })
 
-    // register  hard fail, show error if this fails
-    try {
-      await register({
-        FirstName: data.firstName,
-        LastName: data.lastName,
-        email: data.email,
-        phone: fullPhone,
-        password: data.password,
-      })
-    } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ||
-        "Registration failed. Please try again."
-      setError(msg.slice(0, 200))
-      setLoading(false)
-      return
-    }
-
-    //  send OTP  non-fatal, user can resend from OTP screen
-    try {
-      await sendOtp(fullPhone)
-    } catch {
-      // Ignore user is registered and can use Resend OTP
-    }
-
-    setLoading(false)
-    onOtpReady(fullPhone)
-  }
+  const errorMsg = registerMutation.error
+    ? ((registerMutation.error as { message?: string })?.message || "Registration failed. Please try again.").slice(0, 200)
+    : ""
 
   return {
     field,
-    handleSubmit: handleSubmit(onSubmit),
+    handleSubmit: onSubmit,
     errors,
-    loading,
-    error,
-    clearError: () => setError(""),
+    loading: registerMutation.isPending,
+    error: errorMsg,
+    clearError: () => registerMutation.reset(),
   }
 }

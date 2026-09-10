@@ -1,6 +1,6 @@
 import { apiRequest } from "@/src/lib/api"
 
-// ── Register ──────────────────────────────────────────────────────────────────
+//  Register 
 
 export interface RegisterPayload {
   FirstName: string
@@ -30,7 +30,7 @@ export function register(payload: RegisterPayload) {
   })
 }
 
-// ── Send OTP ──────────────────────────────────────────────────────────────────
+// Send OTP 
 
 export interface SendOtpResponse {
   success: boolean
@@ -44,7 +44,7 @@ export function sendOtp(phone: string) {
   })
 }
 
-// ── Verify OTP ────────────────────────────────────────────────────────────────
+// Verify OTP
 
 export interface VerifyOtpResponse {
   success: boolean
@@ -58,7 +58,7 @@ export function verifyOtp(phone: string, otp: string) {
   })
 }
 
-// ── Login ─────────────────────────────────────────────────────────────────────
+//  Login 
 
 export interface LoginPayload {
   email: string
@@ -87,7 +87,7 @@ export function login(payload: LoginPayload) {
   })
 }
 
-// ── Logout ────────────────────────────────────────────────────────────────────
+// Logout 
 
 export interface LogoutResponse {
   success: boolean
@@ -100,7 +100,7 @@ export function logout() {
   })
 }
 
-// ── Refresh ───────────────────────────────────────────────────────────────────
+// Refresh 
 
 export interface RefreshResponse {
   success: boolean

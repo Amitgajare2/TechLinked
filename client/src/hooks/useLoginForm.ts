@@ -1,6 +1,6 @@
-import { useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation } from "@tanstack/react-query"
 import { loginSchema } from "@/src/schemas"
 import type { LoginFormData } from "@/src/schemas"
 import { login } from "@/src/services/auth.service"
@@ -8,8 +8,6 @@ import { useAuth } from "@/src/context/AuthContext"
 
 export function useLoginForm() {
   const { onLoginSuccess } = useAuth()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
 
   const {
     register,
@@ -19,29 +17,27 @@ export function useLoginForm() {
     resolver: zodResolver(loginSchema),
   })
 
-  const onSubmit = async (data: LoginFormData) => {
-    setError("")
-    setLoading(true)
-    try {
-      const res = await login({ email: data.email, password: data.password })
+  const mutation = useMutation({
+    mutationFn: login,
+    onSuccess: async (res) => {
       await onLoginSuccess(res.data.accessToken)
-      // Navigation is handled by the page after context hydrates
-    } catch (err: unknown) {
-      const msg =
-        (err as { message?: string })?.message ||
-        "Login failed. Please try again."
-      setError(msg.slice(0, 200))
-    } finally {
-      setLoading(false)
-    }
-  }
+    },
+  })
+
+  const onSubmit = handleSubmit((data) => {
+    mutation.mutate({ email: data.email, password: data.password })
+  })
+
+  const errorMsg = mutation.error
+    ? ((mutation.error as { message?: string })?.message || "Login failed. Please try again.").slice(0, 200)
+    : ""
 
   return {
     register,
-    handleSubmit: handleSubmit(onSubmit),
+    handleSubmit: onSubmit,
     errors,
-    loading,
-    error,
-    clearError: () => setError(""),
+    loading: mutation.isPending,
+    error: errorMsg,
+    clearError: () => mutation.reset(),
   }
 }

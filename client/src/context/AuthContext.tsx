@@ -4,9 +4,12 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useState,
 } from "react"
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query"
 import {
   refreshAccessToken,
   logout as logoutService,
@@ -18,9 +21,9 @@ import {
 } from "@/src/lib/token"
 import { apiRequest } from "@/src/lib/api"
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// Types 
 
-interface AuthUser {
+export interface AuthUser {
   id: string
   firstName: string
   lastName: string
@@ -32,17 +35,21 @@ interface AuthContextValue {
   user: AuthUser | null
   /** true while the initial session check is running */
   initializing: boolean
-  /** true while a logout request is in flight */
+  /** true while logout mutation is in flight */
   logoutLoading: boolean
-  /** Call after a successful login to hydrate the context */
+  /** Call after a successful login response to hydrate the context */
   onLoginSuccess: (accessToken: string) => Promise<void>
-  logout: () => Promise<void>
+  logout: () => void
 }
 
-// Context 
-const AuthContext = createContext<AuthContextValue | null>(null)
+// Query keys
 
-// Provider 
+export const authKeys = {
+  session: ["auth", "session"] as const,
+}
+
+// Profile fetcher 
+
 interface ProfileResponse {
   success: boolean
   data: {
@@ -54,85 +61,80 @@ interface ProfileResponse {
   }
 }
 
+async function fetchSession(): Promise<AuthUser> {
+  // Try existing in memory token
+  if (!getAccessToken()) {
+    // mo token attempt silent refresh via http only cookie
+    const res = await refreshAccessToken()
+    setAccessToken(res.data.accessToken)
+  }
+
+  // Fetch profile with valid token
+  const profile = await apiRequest<ProfileResponse>("/api/profile")
+  return {
+    id: profile.data.id,
+    firstName: profile.data.FirstName,
+    lastName: profile.data.LastName,
+    email: profile.data.email,
+    phone: profile.data.phone,
+  }
+}
+
+// Context
+const AuthContext = createContext<AuthContextValue | null>(null)
+
+// Providar
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null)
-  const [initializing, setInitializing] = useState(true)
-  const [logoutLoading, setLogoutLoading] = useState(false)
+  const qc = useQueryClient()
 
-  /** Fetch profile from server and store in context */
-  const fetchAndSetUser = useCallback(async () => {
-    const profile = await apiRequest<ProfileResponse>("/api/profile")
-    setUser({
-      id: profile.data.id,
-      firstName: profile.data.FirstName,
-      lastName: profile.data.LastName,
-      email: profile.data.email,
-      phone: profile.data.phone,
-    })
-  }, [])
+ 
+  const { data: user = null, isLoading: initializing } = useQuery({
+    queryKey: authKeys.session,
+    queryFn: fetchSession,
+    retry: false,
+    throwOnError: false,
+  })
 
-  /** Called by login page after a successful login response */
+  const logoutMutation = useMutation({
+    mutationFn: logoutService,
+    onSettled: () => {
+      clearAccessToken()
+      qc.setQueryData(authKeys.session, null)
+      qc.removeQueries({ queryKey: authKeys.session })
+    },
+  })
+
+  /** login hook after a successful login */
   const onLoginSuccess = useCallback(
     async (accessToken: string) => {
       setAccessToken(accessToken)
-      await fetchAndSetUser()
+      await qc.invalidateQueries({ queryKey: authKeys.session })
     },
-    [fetchAndSetUser]
+    [qc]
   )
 
-  const logout = useCallback(async () => {
-    setLogoutLoading(true)
-    try {
-      await logoutService()
-    } catch {
-      // Server-side revocation failed — still clear client state
-    } finally {
-      clearAccessToken()
-      setUser(null)
-      setLogoutLoading(false)
-    }
-  }, [])
-
-  /** On mount: try to restore session via httpOnly refresh token cookie */
-  useEffect(() => {
-    const init = async () => {
-      // Already have an in-memory token (e.g. navigated from login)
-      if (getAccessToken()) {
-        try {
-          await fetchAndSetUser()
-        } catch {
-          clearAccessToken()
-        }
-        setInitializing(false)
-        return
-      }
-
-      // No in-memory token — try silent refresh via cookie
-      try {
-        const res = await refreshAccessToken()
-        setAccessToken(res.data.accessToken)
-        await fetchAndSetUser()
-      } catch {
-        // No valid session — user must log in
-        clearAccessToken()
-      } finally {
-        setInitializing(false)
-      }
-    }
-
-    init()
-  }, [fetchAndSetUser])
+  const logout = useCallback(() => {
+    logoutMutation.mutate()
+  }, [logoutMutation])
 
   return (
     <AuthContext.Provider
-      value={{ user, initializing, logoutLoading, onLoginSuccess, logout }}
+      value={{
+        user,
+        initializing,
+        logoutLoading: logoutMutation.isPending,
+        onLoginSuccess,
+        logout,
+      }}
     >
       {children}
     </AuthContext.Provider>
   )
 }
 
-//  Hook 
+// Hook 
+
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext)
   if (!ctx) throw new Error("useAuth must be used inside <AuthProvider>")
