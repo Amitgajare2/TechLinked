@@ -9,7 +9,10 @@ import { AxiosError } from "axios";
 import {
   login,
   logout,
-//   registerUser,
+  resendOtp,
+  registerUser,
+  sendOtp,
+ verifyOtp
 } from "@/src/API/Auth/authAPI";
 
 interface JwtPayload {
@@ -22,26 +25,23 @@ interface ErrorResponse {
   message?: string;
 }
 
-// ==================== REGISTER ====================
+export const useRegister = () => {
+  return useMutation({
+    mutationFn: registerUser,
 
-// export const useRegister = () => {
-//   return useMutation({
-//     mutationFn: registerUser,
+    onSuccess: () => {
+      toast.success("Admin registered successfully");
+    },
 
-//     onSuccess: () => {
-//       toast.success("Admin registered successfully");
-//     },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      const message =
+        error.response?.data?.message || "Something went wrong";
 
-//     onError: (error: AxiosError<ErrorResponse>) => {
-//       const message =
-//         error.response?.data?.message || "Something went wrong";
+      toast.error(message);
+    },
+  });
+};
 
-//       toast.error(message);
-//     },
-//   });
-// };
-
-// ==================== LOGIN ====================
 
 export const useLogin = () => {
   const router = useRouter();
@@ -51,9 +51,9 @@ export const useLogin = () => {
     mutationFn: login,
 
     onSuccess: (data) => {
-      const token = data.access_token;
+      const {accessToken: token} = data.data;
 
-      // Store token
+      console.log("Login successful, received token:", token);
       localStorage.setItem("login", token);
 
       // Decode token
@@ -67,7 +67,7 @@ export const useLogin = () => {
       } else if (decoded.role === "superadmin") {
         router.push("/superadmin");
       } else {
-        router.push("/");
+        router.push("/home");
       }
 
       // Refresh current user data
@@ -87,7 +87,67 @@ export const useLogin = () => {
   });
 };
 
-// ==================== LOGOUT ====================
+
+export const useSendOtp = () => {
+  return useMutation({
+    mutationFn: sendOtp,
+
+    onSuccess: () => {
+      toast.success("Code sent");
+    },
+
+    onError: (error: AxiosError<ErrorResponse>) => {
+      const message =
+        error.response?.data?.message || "Something went wrong";
+
+      toast.error(message);
+    },
+  });
+};
+
+
+export const useVerifyOtp = () => {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: verifyOtp,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["me"],
+      });
+
+      toast.success("Number verified");
+
+      setTimeout(() => {
+        router.push("/login");
+      }, 500);
+    },
+
+    onError: (error: AxiosError<ErrorResponse>) => {
+      const message =
+        error.response?.data?.message || "Something went wrong";
+
+      toast.error(message);
+    },
+  });
+};
+
+export const useResendOtp = () => {
+  return useMutation({
+    mutationFn: resendOtp,
+
+    onSuccess: () => {
+      toast.success("A new code has been sent");
+    },
+
+    onError: () => {
+      toast.error("Couldn't resend the code. Please try again.");
+    },
+  });
+};
+
 
 export const useLogout = () => {
   const router = useRouter();
@@ -97,7 +157,6 @@ export const useLogout = () => {
     mutationFn: logout,
 
     onSuccess: () => {
-      // Remove token
       localStorage.removeItem("login");
 
       // Refresh current user data

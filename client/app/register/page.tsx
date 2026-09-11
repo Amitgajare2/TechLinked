@@ -11,8 +11,14 @@ import {
   type RegisterFormValues,
   type RegisterPayload,
 } from "@/src/lib/validations/auth";
+import { useRegister } from "@/src/hooks/auth/authHooks";
+import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
+
+const { mutate: registerMutate, isPending: isRegistering } = useRegister();
+const router = useRouter();
+
   const {
     register,
     handleSubmit,
@@ -37,7 +43,15 @@ export default function RegisterPage() {
       phone: values.phone,
       password: values.password,
     };
-    console.log(payload);
+    registerMutate(payload,{
+      onError: (error:any) => {
+        console.error("Registration error:", error);
+      },
+      onSuccess: (data) => {
+        console.log("Registration successful");
+        router.replace(`/verify-otp?token=${data.verificationToken}`);
+      }
+    });
   };
 
   return (
@@ -118,7 +132,7 @@ export default function RegisterPage() {
           disabled={isSubmitting}
           className="w-full bg-[#4C5FFF] hover:bg-[#6E7CFF] disabled:opacity-60 disabled:cursor-not-allowed text-[#0B2340] font-medium text-[14px] rounded-md py-2.5 transition-colors mt-2"
         >
-          {isSubmitting ? "Creating account..." : "Create account"}
+         {isSubmitting || isRegistering ? "Creating account..." : "Create account"}
         </button>
       </form>
 

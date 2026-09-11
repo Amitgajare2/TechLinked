@@ -8,9 +8,11 @@ import { Mail, Lock } from "lucide-react";
 import AuthLayout from "@/src/components/auth/AuthLayout";
 import FormField from "@/src/components/auth/FormField";
 import { loginSchema, type LoginFormValues } from "@/src/lib/validations/auth";
+import { useLogin } from "@/src/hooks/auth/authHooks";
 
 export default function LoginPage() {
   const [remember, setRemember] = useState(false);
+  const { mutate: loginMutate, isPending: isLoggingIn } = useLogin();
 
   const {
     register,
@@ -22,7 +24,7 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (values: LoginFormValues) => {
-    console.log(values, { remember });
+    loginMutate({ ...values, remember });
   };
 
   return (
@@ -78,7 +80,7 @@ export default function LoginPage() {
 
         <button
           type="submit"
-          disabled={isSubmitting}
+          disabled={isLoggingIn || isSubmitting}
           className="w-full bg-[#4C5FFF] hover:bg-[#6E7CFF] disabled:opacity-60 disabled:cursor-not-allowed text-[#0B2340] font-medium text-[14px] rounded-md py-2.5 transition-colors mt-2"
         >
           {isSubmitting ? "Signing in..." : "Sign in"}
