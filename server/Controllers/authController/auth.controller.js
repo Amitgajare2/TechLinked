@@ -66,9 +66,16 @@ export const register = async (req, res, next) => {
       },
     });
 
+      const verificationToken = jwt.sign(
+    { userId: user.id, phone: user.phone },
+      process.env.OTP_TOKEN_SECRET,
+   { expiresIn: "10m" }
+   );
+
     return res.status(201).json({
       success: true,
       message: "Registration successful. Please verify your phone number.",
+      verificationToken,
       user: {
         id: user.id,
         FirstName: user.FirstName,
@@ -156,17 +163,27 @@ export const sendOtp = async (req, res, next) => {
 
 export const verifyOtp = async (req, res, next) => {
   try {
-    const { phone, otp } = req.body;
+    const { token, otp } = req.body;
 
-    if (!phone || !otp) {
+    if (!token || !otp) {
       return res.status(400).json({
         success: false,
-        message: "Phone number and OTP are required",
+        message: "Verification token and OTP are required",
+      });
+    }
+
+    let payload;
+    try {
+      payload = jwt.verify(token, process.env.OTP_TOKEN_SECRET);
+    } catch {
+      return res.status(400).json({
+        success: false,
+        message: "Verification link expired. Please register again.",
       });
     }
 
     const user = await prisma.user.findUnique({
-      where: { phone },
+      where: { id: payload.userId },
     });
 
     if (!user) {
@@ -201,7 +218,6 @@ export const verifyOtp = async (req, res, next) => {
       });
     }
 
-    // Check our local session expiry
     if (otpRecord.expiresAt < new Date()) {
       return res.status(400).json({
         success: false,
@@ -209,11 +225,7 @@ export const verifyOtp = async (req, res, next) => {
       });
     }
 
-    // Ask 2Factor to verify the OTP
-    const verified = await verify2FactorOtp(
-      otpRecord.sessionId,
-      otp
-    );
+    const verified = await verify2FactorOtp(otpRecord.sessionId, otp);
 
     if (!verified) {
       return res.status(400).json({
@@ -222,24 +234,14 @@ export const verifyOtp = async (req, res, next) => {
       });
     }
 
-    // OTP verified successfully
     await prisma.$transaction([
       prisma.user.update({
-        where: {
-          id: user.id,
-        },
-        data: {
-          phoneVerified: true,
-        },
+        where: { id: user.id },
+        data: { phoneVerified: true },
       }),
-
       prisma.otpVerification.update({
-        where: {
-          id: otpRecord.id,
-        },
-        data: {
-          verifiedAt: new Date(),
-        },
+        where: { id: otpRecord.id },
+        data: { verifiedAt: new Date() },
       }),
     ]);
 

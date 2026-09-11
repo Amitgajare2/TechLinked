@@ -33,19 +33,12 @@ app.use(
 app.use(express.json());
 app.use(cookieParser());
 
-// ===============================
-// Swagger
-// ===============================
 
 app.use(
   "/api-docs",
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec)
 );
-
-// ===============================
-// Routes
-// ===============================
 
 app.use("/api/auth", authRoutes);
 
@@ -61,8 +54,6 @@ app.use("/api", commentRoutes);
 
 app.use("/api", likeRoutes);
 
-// Health Check
-
 
 app.get("/", (req, res) => {
   res.json({
@@ -70,6 +61,4 @@ app.get("/", (req, res) => {
   });
 });
 
-
-// Server
 startServer(app);
