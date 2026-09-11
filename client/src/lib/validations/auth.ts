@@ -49,6 +49,7 @@ export const registerSchema = yup.object({
 
 export type RegisterFormValues = yup.InferType<typeof registerSchema>;
 
+// Shape the API expects — casing kept exactly as specified.
 export interface RegisterPayload {
   FirstName: string;
   LastName: string;
@@ -56,3 +57,12 @@ export interface RegisterPayload {
   phone: string;
   password: string;
 }
+
+export const otpSchema = yup.object({
+  otp: yup
+    .string()
+    .required("Enter the code")
+    .matches(/^\d{6}$/, "Enter the 6-digit code we sent"),
+});
+
+export type OtpFormValues = yup.InferType<typeof otpSchema>;

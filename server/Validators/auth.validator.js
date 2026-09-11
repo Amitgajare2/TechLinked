@@ -20,9 +20,9 @@ export const registerSchema = z.object({
         .transform((email) => email.toLowerCase()),
 
     phone: z
-        .string()
-        .trim()
-        .regex(/^\+[1-9]\d{7,14}$/, "Invalid phone number"),
+   .string()
+   .trim()
+   .regex(/^[1-9]\d{7,14}$/, "Invalid phone number"),
 
     password: z
         .string()
