@@ -1,41 +1,30 @@
-import { api } from '../../lib/axios';
+import { api } from "@/src/lib/axios";
 
-
-
-export const registerUser = async (data:any) => {
-  const res = await api.post('/auth/register', data);
-  return res.data;
-}
-
-export const login = async (data:any) => {
-  const res = await api.post('/auth/login', data);
+export const registerUser = async (data: unknown) => {
+  const res = await api.post("/auth/register", data);
   return res.data;
 };
 
-export const sendOtp = async (data:any) => {
-  const res = await api.post('/auth/send-otp', data);
+export const login = async (data: unknown) => {
+  const res = await api.post("/auth/login", data);
   return res.data;
 };
 
-export const verifyOtp = async (data:any) => {
-  const res = await api.post('/auth/verify-otp', data);
+export const sendOtp = async (data: unknown) => {
+  const res = await api.post("/auth/send-otp", data);
   return res.data;
 };
 
-export const resendOtp = async (data:any) => {
-  const res = await api.post('/auth/resend-otp', data);
+export const verifyOtp = async (data: unknown) => {
+  const res = await api.post("/auth/verify-otp", data);
+  return res.data;
+};
+
+export const resendOtp = async (data: unknown) => {
+  const res = await api.post("/auth/resend-otp", data);
   return res.data;
 };
 
 export const logout = async () => {
-  const token = localStorage.getItem('login');
-  await api.post(
-    '/auth/logout',
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    }
-  );
+  await api.post("/auth/logout");
 };
