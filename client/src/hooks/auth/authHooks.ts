@@ -30,8 +30,8 @@ export const useRegister = () => {
   return useMutation({
     mutationFn: registerUser,
 
-    onSuccess: () => {
-      toast.success("Admin registered successfully");
+    onSuccess: (data) => {
+      toast.success(data.message || "Registration successful");
     },
 
     onError: (error: AxiosError<ErrorResponse>) => {
@@ -94,7 +94,7 @@ export const useSendOtp = () => {
     mutationFn: sendOtp,
 
     onSuccess: () => {
-      toast.success("Code sent");
+      toast.success("Verification code sent");
     },
 
     onError: (error: AxiosError<ErrorResponse>) => {
@@ -137,7 +137,7 @@ export const useVerifyOtp = () => {
 
 export const useResendOtp = () => {
   return useMutation({
-    mutationFn: resendOtp,
+    mutationFn: sendOtp,
 
     onSuccess: () => {
       toast.success("A new code has been sent");

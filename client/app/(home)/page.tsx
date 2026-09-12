@@ -11,6 +11,8 @@ import CreatePostModal from "@/src/components/Models/CreatePostModal"
 import { jwtDecode } from "jwt-decode"
 import { Home, Plus, Ranking, Tv } from 'reicon-react';
 import { tokenStore } from "@/src/lib/auth/tokenStore"
+import LoginPage from "../login/page"
+import GuestGateModal from "@/src/components/auth/GuestGateModal"
 
 
 
@@ -40,6 +42,8 @@ export default function HomePage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [showCreatePost, setShowCreatePost] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+ const [showGate, setShowGate] = useState(false);
+ const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
 
   const [currentUserId, setCurrentUserId] = useState("")
 
@@ -68,7 +72,8 @@ useEffect(() => {
 
   const handleCreatePostClick = () => {
     if (!tokenStore.get()) {
-      router.push("/login")
+      setGateAction("post")
+      setShowGate(true)
       return
     }
     setShowCreatePost(true)
@@ -223,10 +228,21 @@ useEffect(() => {
         
       </nav>
 
-      {/* Create post */}
       {showCreatePost && (
         <CreatePostModal onClose={() => setShowCreatePost(false)} />
       )}
+
+      {
+        showGate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+             <GuestGateModal
+             isOpen={showGate}
+             onClose={()=>{setShowGate(false)}}
+             action={gateAction}
+             />  
+          </div>
+        )
+      }
     </main>
   )
 }
