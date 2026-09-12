@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { jwtDecode } from "jwt-decode";
 import { AxiosError } from "axios";
+import { tokenStore } from "@/src/lib/auth/tokenStore"
 
 import {
   login,
@@ -51,10 +52,10 @@ export const useLogin = () => {
     mutationFn: login,
 
     onSuccess: (data) => {
-      const {accessToken: token} = data.data;
+      const { accessToken: token } = data.data;
+      console.log("token", token)
 
-      console.log("Login successful, received token:", token);
-      localStorage.setItem("login", token);
+      tokenStore.set(token);
 
       // Decode token
       const decoded = jwtDecode<JwtPayload>(token);
@@ -157,7 +158,7 @@ export const useLogout = () => {
     mutationFn: logout,
 
     onSuccess: () => {
-      localStorage.removeItem("login");
+      tokenStore.set(null);
 
       // Refresh current user data
       queryClient.invalidateQueries({
