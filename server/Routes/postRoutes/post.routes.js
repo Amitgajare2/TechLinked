@@ -77,7 +77,6 @@ router.post(
  */
 router.get(
   "/",
-  authenticate,
   getPosts
 );
 
@@ -106,7 +105,6 @@ router.get(
  */
 router.get(
   "/:id",
-  authenticate,
   getPostById
 );
 

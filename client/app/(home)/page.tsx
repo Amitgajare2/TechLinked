@@ -6,10 +6,14 @@ import { useLogout } from "@/src/hooks/auth/authHooks"
 import { useGetPosts } from "@/src/hooks/post/postHooks"
 import { useQuery } from "@tanstack/react-query"
 import { api } from "@/src/lib/axios"
-import TweetCard from "@/src/components/TweetCard"
-import CreatePostModal from "@/src/components/CreatePostModal"
+import TweetCard from "@/src/components/User/Post/TweetCard"
+import CreatePostModal from "@/src/components/Models/CreatePostModal"
 import { jwtDecode } from "jwt-decode"
 import { Home, Plus, Ranking, Tv } from 'reicon-react';
+import { tokenStore } from "@/src/lib/auth/tokenStore"
+import LoginPage from "../login/page"
+import GuestGateModal from "@/src/components/auth/GuestGateModal"
+
 
 
 interface JwtPayload {
@@ -38,19 +42,22 @@ export default function HomePage() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [showCreatePost, setShowCreatePost] = useState(false)
   const profileRef = useRef<HTMLDivElement>(null)
+ const [showGate, setShowGate] = useState(false);
+ const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
 
   const [currentUserId, setCurrentUserId] = useState("")
 
-  useEffect(() => {
-    const token = localStorage.getItem("login")
-    if (!token) { router.replace("/login"); return }
-    try {
-      const decoded = jwtDecode<JwtPayload>(token)
-      setCurrentUserId(decoded.userId ?? "")
-    } catch {
-      router.replace("/login")
-    }
-  }, [router])
+useEffect(() => {
+  const token = tokenStore.get()
+  if (!token) return // not logged in — that's fine, browse anonymously
+
+  try {
+    const decoded = jwtDecode<JwtPayload>(token)
+    setCurrentUserId(decoded.userId ?? "")
+  } catch {
+    tokenStore.set(null) // corrupt token, clear it silently
+  }
+}, [])
 
   // Fetch profile to get  name
   const { data: profile } = useQuery<ProfileData>({
@@ -62,6 +69,15 @@ export default function HomePage() {
     enabled: !!currentUserId,
     staleTime: 1000 * 60 * 5,
   })
+
+  const handleCreatePostClick = () => {
+    if (!tokenStore.get()) {
+      setGateAction("post")
+      setShowGate(true)
+      return
+    }
+    setShowCreatePost(true)
+  }
 
   const displayName = profile
     ? `${profile.FirstName} ${profile.LastName}`
@@ -180,25 +196,25 @@ export default function HomePage() {
       <nav className="fixed bottom-5 left-1/2 z-40 flex h-[68px] w-[calc(100%-32px)] max-w-lg -translate-x-1/2 items-center justify-between rounded-[24px] border border-white/50 bg-white/45 px-5 shadow-[0_8px_40px_rgba(0,0,0,0.12)] backdrop-blur-2xl backdrop-saturate-150">
 
         {/* Home */}
-        <button className="flex h-11 w-11 items-center justify-center rounded-full bg-black text-white shadow-sm">
+        <button className="flex h-11 w-11 items-center cursor-pointer justify-center rounded-full bg-black text-white shadow-sm">
           <Home/>
         </button>
 
         {/* rank */}
-        <button className="flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition hover:bg-black/5">
+        <button className="flex h-11 w-11 items-center cursor-pointer justify-center rounded-full text-gray-600 transition hover:bg-black/5">
           <Ranking />
         </button>
 
         {/* Create post */}
         <button
-          onClick={() => setShowCreatePost(true)}
-          className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-[5px] border-[#f7f7f8] bg-black text-2xl text-white shadow-[0_8px_25px_rgba(0,0,0,0.2)] transition hover:scale-105 active:scale-95"
+          onClick={handleCreatePostClick}
+          className="-mt-8 flex h-14 w-14 cursor-pointer items-center justify-center rounded-full border-[5px] border-[#f7f7f8] bg-black text-2xl text-white shadow-[0_8px_25px_rgba(0,0,0,0.2)] transition hover:scale-105 active:scale-95"
         >
           <Plus/>
         </button>
 
         {/* Notifications */}
-        <button className="relative flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition hover:bg-black/5">
+        <button className="relative flex h-11 w-11 items-center cursor-pointer justify-center rounded-full text-gray-600 transition hover:bg-black/5">
           <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M18 8a6 6 0 00-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9" />
             <path d="M10 21h4" />
@@ -206,16 +222,27 @@ export default function HomePage() {
           <span className="absolute right-1 top-1 h-2 w-2 rounded-full bg-red-500" />
         </button>
 
-        <button className="relative flex h-11 w-11 items-center justify-center rounded-full text-gray-600 transition hover:bg-black/5">
+        <button className="relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-full text-gray-600 transition hover:bg-black/5">
           <Tv />
         </button>
         
       </nav>
 
-      {/* Create post */}
       {showCreatePost && (
         <CreatePostModal onClose={() => setShowCreatePost(false)} />
       )}
+
+      {
+        showGate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+             <GuestGateModal
+             isOpen={showGate}
+             onClose={()=>{setShowGate(false)}}
+             action={gateAction}
+             />  
+          </div>
+        )
+      }
     </main>
   )
 }

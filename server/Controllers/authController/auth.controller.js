@@ -2,6 +2,7 @@ import argon2 from "argon2";
 import prisma from "../../Database/prisma.js";
 import { registerSchema } from "../../Validators/auth.validator.js";
 import { loginSchema } from "../../Schemas/auth.schema.js";
+import jwt from "jsonwebtoken";
 import {
   generateAccessToken, generateRefreshToken,
   verifyRefreshToken,
@@ -66,12 +67,17 @@ export const register = async (req, res, next) => {
       },
     });
 
-      const verificationToken = jwt.sign(
-    { userId: user.id, phone: user.phone },
+    const verificationToken = jwt.sign(
+      {
+        userId: user.id,
+        phone: user.phone,
+      },
       process.env.OTP_TOKEN_SECRET,
-   { expiresIn: "10m" }
-   );
-
+      {
+        expiresIn: "10m",
+      }
+    );
+    
     return res.status(201).json({
       success: true,
       message: "Registration successful. Please verify your phone number.",
@@ -92,23 +98,55 @@ export const register = async (req, res, next) => {
 
 export const sendOtp = async (req, res, next) => {
   try {
-    const { phone } = req.body;
+    const { token } = req.body;
 
-    if (!phone) {
+    if (!token) {
       return res.status(400).json({
         success: false,
-        message: "Phone number is required",
+        message: "Verification token is required",
       });
     }
 
+    let payload;
+
+    try {
+      payload = jwt.verify(
+        token,
+        process.env.OTP_TOKEN_SECRET
+      );
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Verification link expired. Please register again.",
+      });
+    }
+
+    if (!payload.userId || !payload.phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification token",
+      });
+    }
+
+    // 4. Find user
     const user = await prisma.user.findUnique({
-      where: { phone },
+      where: {
+        id: payload.userId,
+      },
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    // 5. Extra security check
+    if (user.phone !== payload.phone) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid verification token",
       });
     }
 
@@ -119,10 +157,9 @@ export const sendOtp = async (req, res, next) => {
       });
     }
 
-    // Send OTP 
-    const result = await send2FactorOtp(phone);
 
-    // 2Factor returns the session ID in Details
+    const result = await send2FactorOtp(user.phone);
+
     const sessionId = result.Details;
 
     if (!sessionId) {
@@ -132,7 +169,6 @@ export const sendOtp = async (req, res, next) => {
       });
     }
 
-    // Invalidate previous OTP sessions
     await prisma.otpVerification.updateMany({
       where: {
         userId: user.id,
@@ -143,12 +179,13 @@ export const sendOtp = async (req, res, next) => {
       },
     });
 
-    // Save new 2Factor session
     await prisma.otpVerification.create({
       data: {
         userId: user.id,
         sessionId,
-        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+        expiresAt: new Date(
+          Date.now() + 10 * 60 * 1000
+        ),
       },
     });
 
@@ -160,6 +197,7 @@ export const sendOtp = async (req, res, next) => {
     next(error);
   }
 };
+
 
 export const verifyOtp = async (req, res, next) => {
   try {
@@ -174,22 +212,41 @@ export const verifyOtp = async (req, res, next) => {
 
     let payload;
     try {
-      payload = jwt.verify(token, process.env.OTP_TOKEN_SECRET);
-    } catch {
+      payload = jwt.verify(
+        token,
+        process.env.OTP_TOKEN_SECRET
+      );
+    } catch (error) {
       return res.status(400).json({
         success: false,
         message: "Verification link expired. Please register again.",
       });
     }
 
+    if (!payload.userId || !payload.phone) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid verification token",
+      });
+    }
+
     const user = await prisma.user.findUnique({
-      where: { id: payload.userId },
+      where: {
+        id: payload.userId,
+      },
     });
 
     if (!user) {
       return res.status(404).json({
         success: false,
         message: "User not found",
+      });
+    }
+
+    if (user.phone !== payload.phone) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid verification token",
       });
     }
 
@@ -200,7 +257,6 @@ export const verifyOtp = async (req, res, next) => {
       });
     }
 
-    // Get the latest unverified 2Factor session
     const otpRecord = await prisma.otpVerification.findFirst({
       where: {
         userId: user.id,
@@ -225,7 +281,10 @@ export const verifyOtp = async (req, res, next) => {
       });
     }
 
-    const verified = await verify2FactorOtp(otpRecord.sessionId, otp);
+    const verified = await verify2FactorOtp(
+      otpRecord.sessionId,
+      otp
+    );
 
     if (!verified) {
       return res.status(400).json({
@@ -236,12 +295,21 @@ export const verifyOtp = async (req, res, next) => {
 
     await prisma.$transaction([
       prisma.user.update({
-        where: { id: user.id },
-        data: { phoneVerified: true },
+        where: {
+          id: user.id,
+        },
+        data: {
+          phoneVerified: true,
+        },
       }),
+
       prisma.otpVerification.update({
-        where: { id: otpRecord.id },
-        data: { verifiedAt: new Date() },
+        where: {
+          id: otpRecord.id,
+        },
+        data: {
+          verifiedAt: new Date(),
+        },
       }),
     ]);
 
@@ -256,7 +324,6 @@ export const verifyOtp = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    // Validate request body
     const result = loginSchema.safeParse(req.body);
 
     if (!result.success) {
@@ -279,7 +346,7 @@ export const login = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+          message: "Please register first",
       });
     }
 
@@ -300,7 +367,7 @@ export const login = async (req, res, next) => {
     if (!passwordValid) {
       return res.status(401).json({
         success: false,
-        message: "Invalid email or password",
+        message: "password is incorrect",
       });
     }
 
