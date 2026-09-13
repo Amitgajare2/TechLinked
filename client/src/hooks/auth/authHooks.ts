@@ -68,7 +68,7 @@ export const useLogin = () => {
       } else if (decoded.role === "superadmin") {
         router.push("/superadmin");
       } else {
-        router.push("/home");
+        router.push("/");
       }
 
       // Refresh current user data

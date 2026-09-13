@@ -1,8 +1,7 @@
 import express from "express";
 
 import {
-  likePost,
-  unlikePost,
+  toggleLike,
   getPostLikes,
 } from "../../Controllers/postController/like.controller.js";
 
@@ -45,7 +44,7 @@ const router = express.Router();
 router.post(
   "/posts/:postId/like",
   authenticate,
-  likePost
+  toggleLike
 );
 
 /**
@@ -71,11 +70,6 @@ router.post(
  *       401:
  *         description: Unauthorized
  */
-router.delete(
-  "/posts/:postId/like",
-  authenticate,
-  unlikePost
-);
 
 /**
  * @swagger

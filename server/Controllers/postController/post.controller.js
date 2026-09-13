@@ -73,6 +73,7 @@ export const createPost = async (req, res, next) => {
 
 export const getPosts = async (req, res, next) => {
   try {
+    const userId = req.user?.userId;
     const posts = await prisma.post.findMany({
       orderBy: {
         createdAt: "desc",
@@ -96,15 +97,58 @@ export const getPosts = async (req, res, next) => {
 
         _count: {
           select: {
+            likes: true,
             comments: true,
           },
         },
       },
     });
 
+    // Find which posts the current user has liked
+    let likedPostIds = new Set();
+
+    if (userId && posts.length > 0) {
+      const postIds = posts.map((post) => post.id);
+
+      const userLikes = await prisma.postLike.findMany({
+        where: {
+          userId,
+          postId: {
+            in: postIds,
+          },
+        },
+
+        select: {
+          postId: true,
+        },
+      });
+
+      likedPostIds = new Set(
+        userLikes.map((like) => like.postId)
+      );
+    }
+
+    const formattedPosts = posts.map((post) => ({
+      id: post.id,
+      imageUrl: post.imageUrl,
+      caption: post.caption,
+      createdAt: post.createdAt,
+      updatedAt: post.updatedAt,
+
+      user: post.user,
+
+      likeCount: post._count.likes,
+      commentCount: post._count.comments,
+
+      isLiked: userId
+        ? likedPostIds.has(post.id)
+        : false,
+    }));
+
     return res.status(200).json({
       success: true,
-      data: posts,
+      message: "Posts fetched successfully",
+      data: formattedPosts,
     });
   } catch (error) {
     next(error);

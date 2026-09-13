@@ -45,3 +45,8 @@ export const updatePost = async ({
 export const deletePost = async (id: string): Promise<void> => {
   await api.delete(`/posts/${id}`);
 };
+
+export const giveLike = async(id:string)=>{
+  const res = await api.post(`/posts/${id}/like`);
+  return res.data;
+}

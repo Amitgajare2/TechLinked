@@ -10,6 +10,7 @@ import {
 
 import { authenticate } from "../../Middleware/Auth/auth.middleware.js";
 import { uploadPostImage } from "../../Middleware/upload.middleware.js";
+import { optionalAuthenticate } from "../../Middleware/Auth/optionalAuthenticate.js";
 
 const router = express.Router();
 
@@ -76,7 +77,7 @@ router.post(
  *         description: Unauthorized
  */
 router.get(
-  "/",
+  "/",optionalAuthenticate,
   getPosts
 );
 

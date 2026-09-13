@@ -9,6 +9,7 @@ import {
   createPost,
   updatePost,
   deletePost,
+  giveLike,
 } from "@/src/API/Post/postAPI";
 
 interface ErrorResponse {
@@ -19,7 +20,7 @@ export const postKeys = {
   all: ["posts"] as const,
 };
 
-//  Get all posts 
+// Post Hooks
 
 export const useGetPosts = () => {
   return useQuery({
@@ -28,8 +29,6 @@ export const useGetPosts = () => {
     retry: 1,
   });
 };
-
-// Create post 
 
 export const useCreatePost = () => {
   const queryClient = useQueryClient();
@@ -49,8 +48,6 @@ export const useCreatePost = () => {
   });
 };
 
-// Update post 
-
 export const useUpdatePost = () => {
   const queryClient = useQueryClient();
 
@@ -68,9 +65,7 @@ export const useUpdatePost = () => {
     },
   });
 };
-
-//  Delete post 
-
+ 
 export const useDeletePost = () => {
   const queryClient = useQueryClient();
 
@@ -88,3 +83,24 @@ export const useDeletePost = () => {
     },
   });
 };
+
+
+  // Like Hooks
+
+export const useHandleLike = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: giveLike,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+    },
+
+    onError: (error: AxiosError<ErrorResponse>) => {
+      const message = error.response?.data?.message || "try again later";
+      toast.error(message);
+    },
+  });
+};
+

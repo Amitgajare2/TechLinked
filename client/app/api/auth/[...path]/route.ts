@@ -1,51 +1,76 @@
-/**
- * Proxy route for /api/auth/* → Express server
- *
- * Next.js rewrites silently drop Set-Cookie headers from upstream responses,
- * so the refreshToken cookie never reaches the browser.
- * A Route Handler properly forwards all response headers including Set-Cookie.
- */
+import { NextRequest, NextResponse } from "next/server";
 
-import { NextRequest, NextResponse } from "next/server"
+const API_URL = process.env.API_URL || "http://localhost:5000";
 
-const API_URL = process.env.API_URL || "http://localhost:5000"
+async function handler(
+  req: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
+  const { path } = await params;
 
-async function handler(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
-  const { path } = await params
-  const upstreamUrl = `${API_URL}/api/auth/${path.join("/")}`
+  const upstreamUrl = `${API_URL}/api/${path.join("/")}`;
 
-  // Forward the request to Express, including cookies from the browser
+  // Get headers from browser request
+  const authorization = req.headers.get("authorization");
+  const cookie = req.headers.get("cookie");
+  const contentType = req.headers.get("content-type");
+
+  const headers = new Headers();
+
+  // Forward Authorization header
+  if (authorization) {
+    headers.set("authorization", authorization);
+  }
+
+  // Forward cookies
+  if (cookie) {
+    headers.set("cookie", cookie);
+  }
+
+  // Forward Content-Type
+  if (contentType) {
+    headers.set("content-type", contentType);
+  }
+
   const upstreamRes = await fetch(upstreamUrl, {
     method: req.method,
-    headers: {
-      "Content-Type": "application/json",
-      // Forward the cookie header so the refresh token reaches Express
-      ...(req.headers.get("cookie") ? { cookie: req.headers.get("cookie")! } : {}),
-    },
-    body: req.method !== "GET" && req.method !== "HEAD"
-      ? await req.text()
-      : undefined,
-  })
+    headers,
+    body:
+      req.method !== "GET" && req.method !== "HEAD"
+        ? await req.arrayBuffer()
+        : undefined,
+  });
 
-  const body = await upstreamRes.text()
+  const body = await upstreamRes.arrayBuffer();
 
-  const res = new NextResponse(body, {
+  const responseHeaders = new Headers();
+
+  const responseContentType =
+    upstreamRes.headers.get("content-type");
+
+  if (responseContentType) {
+    responseHeaders.set(
+      "content-type",
+      responseContentType
+    );
+  }
+
+  // Forward Set-Cookie
+  const setCookie =
+    upstreamRes.headers.get("set-cookie");
+
+  if (setCookie) {
+    responseHeaders.append("set-cookie", setCookie);
+  }
+
+  return new NextResponse(body, {
     status: upstreamRes.status,
-    headers: { "Content-Type": "application/json" },
-  })
-
-  // Forward ALL Set-Cookie headers back to the browser
-  upstreamRes.headers.forEach((value, key) => {
-    if (key.toLowerCase() === "set-cookie") {
-      res.headers.append("set-cookie", value)
-    }
-  })
-
-  return res
+    headers: responseHeaders,
+  });
 }
 
-export const GET = handler
-export const POST = handler
-export const PUT = handler
-export const PATCH = handler
-export const DELETE = handler
+export const GET = handler;
+export const POST = handler;
+export const PUT = handler;
+export const PATCH = handler;
+export const DELETE = handler;

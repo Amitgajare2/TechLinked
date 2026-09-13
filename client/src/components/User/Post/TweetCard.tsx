@@ -5,8 +5,7 @@ import { useDeletePost, useUpdatePost } from "@/src/hooks/post/postHooks"
 import { Star, CommentDots, Share   } from 'reicon-react';
 import { env } from "process";
 
-// const API_BASE = env.API_URL 
-const API_BASE = "http://localhost:5000" //temporary 
+const API_BASE = "http://localhost:5000"
 
 interface TweetCardProps {
   id: string
@@ -17,9 +16,11 @@ interface TweetCardProps {
   content: string | null
   imageUrl: string
   commentCount?: number
-  /** id of the currently logged in user */
   currentUserId?: string
   postUserId?: string
+  likeCount?: number;
+  handleLike: (postId: string) => void;
+  isLiked: boolean;
 }
 
 export default function TweetCard({
@@ -31,8 +32,11 @@ export default function TweetCard({
   content,
   imageUrl,
   commentCount = 0,
+  likeCount=0,
   currentUserId,
   postUserId,
+  handleLike,
+  isLiked
 }: TweetCardProps) {
   const [editing, setEditing] = useState(false)
   const [caption, setCaption] = useState(content ?? "")
@@ -56,8 +60,6 @@ export default function TweetCard({
 
   return (
     <article className="w-full max-w-xl rounded-3xl border border-black/[0.08] bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
-
-      {/* Header */}
       <div className="flex items-center gap-3">
         <div className="h-11 w-11 overflow-hidden rounded-full bg-black shrink-0">
           <img src={avatarSrc} alt={name} className="h-full w-full object-cover" />
@@ -71,7 +73,6 @@ export default function TweetCard({
           <p className="text-xs text-gray-400">{time}</p>
         </div>
 
-        {/* Owner actions menu */}
         {isOwner && (
           <div className="flex items-center gap-1">
             <button
@@ -91,7 +92,6 @@ export default function TweetCard({
         )}
       </div>
 
-      {/* Post image */}
       <div className="mt-4 rounded-2xl overflow-hidden bg-gray-100">
         <img
           src={imgSrc}
@@ -100,7 +100,6 @@ export default function TweetCard({
         />
       </div>
 
-      {/* Caption — normal or edit mode */}
       {editing ? (
         <div className="mt-3 flex flex-col gap-2">
           <textarea
@@ -134,9 +133,16 @@ export default function TweetCard({
 
       {/* Actions */}
       <div className="mt-5 flex items-center gap-6 border-t border-black/5 pt-4">
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-yellow-500 transition">
-          <Star/>
-        </button>
+        <button
+  onClick={() => handleLike(id)}
+  className="flex items-center gap-1.5 text-sm cursor-pointer text-gray-500 hover:text-yellow-500 transition"
+>
+  <Star
+    className={isLiked ? "text-yellow-400" : "text-gray-500"}
+    fill={isLiked ? "currentColor" : "none"}
+  />
+  <span>{likeCount}</span>
+</button>
         <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition">
           <CommentDots/> <span>{commentCount}</span>
         </button>

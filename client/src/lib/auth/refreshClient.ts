@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Separate instance: no interceptors, avoids recursive refresh loops entirely.
 export const refreshClient = axios.create({
-  baseURL: "/api",
+  baseURL: process.env.NEXT_PUBLIC_API_URL,
   withCredentials: true,
 });
 
