@@ -14,7 +14,7 @@ import {
   registerUser,
   sendOtp,
  verifyOtp
-} from "@/src/API/Auth/authAPI";
+} from "@/src/API/User/Auth/authAPI";
 
 interface JwtPayload {
   role: "admin" | "resident" | "superadmin";

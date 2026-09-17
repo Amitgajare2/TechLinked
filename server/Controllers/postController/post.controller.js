@@ -159,6 +159,7 @@ export const getPosts = async (req, res, next) => {
 export const getPostById = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const userId = req.user?.userId;
 
     const post = await prisma.post.findUnique({
       where: {
@@ -205,6 +206,7 @@ export const getPostById = async (req, res, next) => {
 
         _count: {
           select: {
+            likes: true,
             comments: true,
           },
         },
@@ -218,15 +220,34 @@ export const getPostById = async (req, res, next) => {
       });
     }
 
+    let isLiked = false;
+
+    if (userId) {
+      const userLike = await prisma.postLike.findUnique({
+        where: {
+          userId_postId: {
+            userId,
+            postId: id,
+          },
+        },
+      });
+
+      isLiked = !!userLike;
+    }
+
     return res.status(200).json({
       success: true,
-      data: post,
+      data: {
+        ...post,
+        likeCount: post._count.likes,
+        commentCount: post._count.comments,
+        isLiked,
+      },
     });
   } catch (error) {
     next(error);
   }
 };
-
 
 export const updatePost = async (req, res, next) => {
   try {

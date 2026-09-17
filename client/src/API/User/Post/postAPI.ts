@@ -14,13 +14,44 @@ export interface Post {
   createdAt: string;
   updatedAt: string;
   user: PostUser;
-  _count?: { comments: number };
+  likeCount: number;
+  commentCount: number;
+  isLiked: boolean;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+  user: PostUser;
 }
 
 // Token is attached automatically by the axios requeste
 
 export const getPosts = async (): Promise<Post[]> => {
   const res = await api.get("/posts");
+  return res.data.data;
+};
+
+export const getPost = async (id: string): Promise<Post> => {
+  const res = await api.get(`/posts/${id}`);
+  return res.data.data;
+};
+
+export const getComments = async (postId: string): Promise<Comment[]> => {
+  const res = await api.get(`/posts/${postId}/comments`);
+  return res.data.data;
+};
+
+export const postComment = async ({
+  postId,
+  content,
+}: {
+  postId: string;
+  content: string;
+}): Promise<Comment> => {
+  const res = await api.post(`/posts/${postId}/comments`, { content });
   return res.data.data;
 };
 
@@ -50,3 +81,9 @@ export const giveLike = async(id:string)=>{
   const res = await api.post(`/posts/${id}/like`);
   return res.data;
 }
+
+
+
+
+
+
