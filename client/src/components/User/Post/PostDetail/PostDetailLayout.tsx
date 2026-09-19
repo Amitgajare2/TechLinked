@@ -74,6 +74,46 @@ const PostDetailLayout = ({
     const [showGate, setShowGate] = useState(false);
     const router = useRouter();
     const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("comment");
+    const [shareStatus, setShareStatus] = useState<"idle" | "copied">("idle");
+
+
+
+
+
+ const onShare = async () => {
+  if (!post) return;
+
+  const url = `${window.location.origin}/post/${post.id}`;
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        title: `${post.user.FirstName} ${post.user.LastName} on TechLinked`,
+        text: post.caption,
+        url,
+      });
+
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+
+    setShareStatus("copied");
+
+    setTimeout(() => {
+      setShareStatus("idle");
+    }, 2000);
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      error.name === "AbortError"
+    ) {
+      return;
+    }
+
+    console.error("Share failed:", error);
+  }
+};
 
 
     const requireAuth = (
@@ -222,6 +262,7 @@ const PostDetailLayout = ({
                             handleLike={onLike}
                             isLiked={post.isLiked}
                             handleComment={onJumpToComposer}
+                            handleShare={onShare}
                         />
 
 

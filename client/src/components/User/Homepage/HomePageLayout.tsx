@@ -1,5 +1,5 @@
 "use client"
-import React from 'react'
+import React, { useState } from 'react'
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -20,6 +20,7 @@ import SectionHeader from '../../homePage/SectionHeader/SectionHeader';
 import OpportunityCard from '../../homePage/OpportunityCard/OpportunityCard';
 import ActivityCard from '../../homePage/ActivityCard/ActivityCard';
 import TweetCard from '../Post/TweetCard';
+import TweetCardSkeleton from '../../Loaders/TweetCardSkeleton';
 
 interface Activity {
   icon: LucideIcon;
@@ -56,6 +57,7 @@ interface TweetCardProps {
   activities: Activity[];
   communities: Community[];
   opportunities: Opportunity[];
+  postLoading:boolean
   skills: string[];
   stories: Story[];
 
@@ -81,8 +83,60 @@ const HomePageLayout = (
   formatTime,
   currentUserId,
   handleLike,
+  postLoading,
   handleCommentClick
 }:TweetCardProps) => {
+
+    const [shareStatus, setShareStatus] = useState<
+    "idle" | "copied"
+  >("idle");
+
+  const [post,setPost] = useState("");
+
+const onShare = async (postId: string) => {
+  const post = posts?.find((post: any) => post.id === postId);
+
+  if (!post) {
+    console.error("Post not found:", postId);
+    return;
+  }
+
+  const url = `${window.location.origin}/post/${postId}`;
+
+  try {
+    if (
+      navigator.share &&
+      (!navigator.canShare || navigator.canShare({ url }))
+    ) {
+      await navigator.share({
+        title: `${post.user?.FirstName ?? ""} ${
+          post.user?.LastName ?? ""
+        } on TechLinked`,
+        text: post.caption ?? "",
+        url,
+      });
+
+      return;
+    }
+
+    await navigator.clipboard.writeText(url);
+
+    setShareStatus("copied");
+
+    setTimeout(() => {
+      setShareStatus("idle");
+    }, 2000);
+  } catch (error) {
+    if (
+      error instanceof DOMException &&
+      error.name === "AbortError"
+    ) {
+      return;
+    }
+
+    console.error("Share failed:", error);
+  }
+};
 
   return (
     <div>
@@ -359,7 +413,12 @@ const HomePageLayout = (
 
               {/* Feed */}
               <section className="mt-6 space-y-4">
-                 {posts?.map((post:any) => (
+                
+                 {
+                 
+                 postLoading ? <TweetCardSkeleton/> :
+                 
+                 posts?.map((post:any) => (
                             <TweetCard
                               key={post.id}
                               id={post.id}
@@ -376,6 +435,7 @@ const HomePageLayout = (
                               handleLike={handleLike}
                               isLiked={post.isLiked}
                               handleComment={handleCommentClick}
+                              handleShare={onShare}
                             />
                           ))}
               </section>
@@ -558,25 +618,30 @@ const HomePageLayout = (
           </div>
 
           <div className="mt-4 space-y-4">
-            {posts?.map((post:any) => (
-                       <TweetCard
-                         key={post.id}
-                         id={post.id}
-                         name={`${post.user.FirstName} ${post.user.LastName}`}
-                         username={post.user.FirstName.toLowerCase()}
-                         avatar={post.user.profilePhoto}
-                         time={formatTime(post.createdAt)}
-                         content={post.caption}
-                         imageUrl={post.imageUrl}
-                         commentCount={post.commentCount ?? 0}
-                         likeCount={post.likeCount}
-                         currentUserId={currentUserId}
-                         postUserId={post.user.id}
-                         handleLike={handleLike}
-                         isLiked={post.isLiked}
-                        handleComment={handleCommentClick}
-                       />
-                     ))}
+                {
+                 
+                 postLoading ? <TweetCardSkeleton/> :
+                 
+                 posts?.map((post:any) => (
+                            <TweetCard
+                              key={post.id}
+                              id={post.id}
+                              name={`${post.user.FirstName} ${post.user.LastName}`}
+                              username={post.user.FirstName.toLowerCase()}
+                              avatar={post.user.profilePhoto}
+                              time={formatTime(post.createdAt)}
+                              content={post.caption}
+                              imageUrl={post.imageUrl}
+                              commentCount={post.commentCount ?? 0}
+                              likeCount={post.likeCount}
+                              currentUserId={currentUserId}
+                              postUserId={post.user.id}
+                              handleLike={handleLike}
+                              isLiked={post.isLiked}
+                              handleComment={handleCommentClick}
+                              handleShare={onShare}
+                            />
+                          ))}
           </div>
  
         </div>

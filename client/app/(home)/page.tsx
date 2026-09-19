@@ -123,7 +123,7 @@ interface JwtPayload {
 export default function HomePage() {
 
   const {mutate:handlelike,isPending:ispendingLike} = useHandleLike();
-const { data: posts, isLoading, isError } = useGetPosts()
+const { data: posts, isLoading:postLoading, isError } = useGetPosts()
 const [currentUserId, setCurrentUserId] = useState("");
  const [showGate, setShowGate] = useState(false);
  const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
@@ -195,6 +195,7 @@ console.log("posts",posts)
       currentUserId={currentUserId}
       handleLike={handleLike}
       handleCommentClick={handleCommentClick}
+      postLoading={postLoading}
       />
 
        {
