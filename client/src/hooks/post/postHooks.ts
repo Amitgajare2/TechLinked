@@ -6,11 +6,14 @@ import { AxiosError } from "axios";
 
 import {
   getPosts,
+  getPost,
   createPost,
   updatePost,
   deletePost,
   giveLike,
-} from "@/src/API/Post/postAPI";
+  getComments,
+  postComment,
+} from "@/src/API/User/Post/postAPI";
 
 interface ErrorResponse {
   message?: string;
@@ -18,6 +21,13 @@ interface ErrorResponse {
 
 export const postKeys = {
   all: ["posts"] as const,
+
+  lists: () => [...postKeys.all, "list"] as const,
+
+  details: () => [...postKeys.all, "detail"] as const,
+
+  detail: (postId: string) =>
+    [...postKeys.details(), postId] as const,
 };
 
 // Post Hooks
@@ -26,6 +36,15 @@ export const useGetPosts = () => {
   return useQuery({
     queryKey: postKeys.all,
     queryFn: getPosts,
+    retry: 1,
+  });
+};
+
+export const useGetPost = (postId: string) => {
+  return useQuery({
+    queryKey: postKeys.detail(postId),
+    queryFn: () => getPost(postId),
+    enabled: !!postId,
     retry: 1,
   });
 };
@@ -103,4 +122,39 @@ export const useHandleLike = () => {
     },
   });
 };
+
+
+
+
+
+export const useAddComment = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: postComment,
+
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
+      queryClient.invalidateQueries({
+        queryKey: [...postKeys.detail(variables.postId), "comments"],
+      });
+      toast.success("Comment added!");
+    },
+
+    onError: (error: AxiosError<ErrorResponse>) => {
+      const message = error.response?.data?.message || "Failed to create post";
+      toast.error(message);
+    },
+  });
+};
+
+export const useGetComments = (postId:string) => {
+  return useQuery({
+    queryKey: [...postKeys.detail(postId), "comments"],
+    queryFn: () => getComments(postId),
+    enabled: !!postId,
+    retry: 1,
+  });
+};
+
 

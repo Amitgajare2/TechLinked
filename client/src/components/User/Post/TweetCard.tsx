@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useDeletePost, useUpdatePost } from "@/src/hooks/post/postHooks"
 import { Star, CommentDots, Share   } from 'reicon-react';
 import { env } from "process";
+import { MessageCircle } from "lucide-react";
 
 const API_BASE = "http://localhost:5000"
 
@@ -15,12 +16,13 @@ interface TweetCardProps {
   time: string
   content: string | null
   imageUrl: string
-  commentCount?: number
+  commentCount: number
   currentUserId?: string
   postUserId?: string
   likeCount?: number;
   handleLike: (postId: string) => void;
   isLiked: boolean;
+  handleComment?: (postId: string) => void,
 }
 
 export default function TweetCard({
@@ -36,8 +38,11 @@ export default function TweetCard({
   currentUserId,
   postUserId,
   handleLike,
-  isLiked
+  isLiked,
+  handleComment
 }: TweetCardProps) {
+
+  console.log(isLiked)
   const [editing, setEditing] = useState(false)
   const [caption, setCaption] = useState(content ?? "")
 
@@ -59,7 +64,7 @@ export default function TweetCard({
     : `${API_BASE}${imageUrl}`
 
   return (
-    <article className="w-full max-w-xl rounded-3xl border border-black/[0.08] bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
+    <article className="w-full max-w-2xl rounded-3xl border border-black/[0.08] bg-white p-5 shadow-[0_10px_40px_rgba(0,0,0,0.06)]">
       <div className="flex items-center gap-3">
         <div className="h-11 w-11 overflow-hidden rounded-full bg-black shrink-0">
           <img src={avatarSrc} alt={name} className="h-full w-full object-cover" />
@@ -132,24 +137,88 @@ export default function TweetCard({
       )}
 
       {/* Actions */}
-      <div className="mt-5 flex items-center gap-6 border-t border-black/5 pt-4">
-        <button
-  onClick={() => handleLike(id)}
-  className="flex items-center gap-1.5 text-sm cursor-pointer text-gray-500 hover:text-yellow-500 transition"
+     <div
+  className="
+    mx-5 mt-3
+    flex items-center
+    border-t border-border
+    py-3
+  "
 >
-  <Star
-    className={isLiked ? "text-yellow-400" : "text-gray-500"}
-    fill={isLiked ? "currentColor" : "none"}
-  />
-  <span>{likeCount}</span>
+  {/* Like */}
+
+  <button
+    onClick={() => handleLike(id)}
+    className={`
+      flex items-center gap-2
+      rounded-xl
+      px-3.5 py-2.5
+      text-sm font-medium
+      transition
+      ${
+        isLiked
+          ? "bg-primary-soft text-primary"
+          : "text-text-secondary hover:bg-surface-2 hover:text-primary"
+      }
+    `}
+  >
+    <Star
+      size={21}
+      strokeWidth={2}
+      className={
+        isLiked
+          ? "text-primary"
+          : "text-text-secondary"
+      }
+      fill={isLiked ? "currentColor" : "none"}
+    />
+
+    <span>
+      Like
+    </span>
+
+    <span className="text-text-muted">
+      {likeCount}
+    </span>
+  </button>
+
+
+  {/* Comment */}
+
+  <button
+    onClick={() => handleComment?.(id)}
+  className="flex items-center ml-4 gap-2 text-text-muted"
+>
+  <MessageCircle size={16} />
+  {commentCount}
 </button>
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition">
-          <CommentDots/> <span>{commentCount}</span>
-        </button>
-        <button className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-black transition ml-auto">
-          <Share/>
-        </button>
-      </div>
+
+
+  {/* Share */}
+
+  <button
+    className="
+      ml-auto
+      flex items-center gap-2
+      rounded-xl
+      px-3.5 py-2.5
+      text-sm font-medium
+      text-text-secondary
+      transition
+      hover:bg-primary-soft
+      hover:text-primary
+    "
+  >
+    <Share
+      size={21}
+      strokeWidth={2}
+    />
+
+    <span>
+      Share
+    </span>
+  </button>
+</div>
     </article>
   )
 }
