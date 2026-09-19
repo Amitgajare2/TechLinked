@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useDeletePost, useUpdatePost } from "@/src/hooks/post/postHooks"
 import { Star, CommentDots, Share   } from 'reicon-react';
 import { env } from "process";
-import { MessageCircle } from "lucide-react";
+import { MessageCircle, Share2 } from "lucide-react";
 
 const API_BASE = "http://localhost:5000"
 
@@ -23,6 +23,7 @@ interface TweetCardProps {
   handleLike: (postId: string) => void;
   isLiked: boolean;
   handleComment?: (postId: string) => void,
+  handleShare?: (postId: string) => void;
 }
 
 export default function TweetCard({
@@ -39,7 +40,8 @@ export default function TweetCard({
   postUserId,
   handleLike,
   isLiked,
-  handleComment
+  handleComment,
+  handleShare
 }: TweetCardProps) {
 
   console.log(isLiked)
@@ -153,7 +155,7 @@ export default function TweetCard({
       flex items-center gap-2
       rounded-xl
       px-3.5 py-2.5
-      text-sm font-medium
+      text-sm font-medium cursor-pointer
       transition
       ${
         isLiked
@@ -187,7 +189,7 @@ export default function TweetCard({
 
   <button
     onClick={() => handleComment?.(id)}
-  className="flex items-center ml-4 gap-2 text-text-muted"
+  className="flex items-center ml-4 gap-2 cursor-pointer  text-text-muted"
 >
   <MessageCircle size={16} />
   {commentCount}
@@ -196,28 +198,28 @@ export default function TweetCard({
 
   {/* Share */}
 
-  <button
-    className="
-      ml-auto
-      flex items-center gap-2
-      rounded-xl
-      px-3.5 py-2.5
-      text-sm font-medium
-      text-text-secondary
-      transition
-      hover:bg-primary-soft
-      hover:text-primary
-    "
-  >
-    <Share
-      size={21}
-      strokeWidth={2}
-    />
-
-    <span>
-      Share
-    </span>
-  </button>
+<button
+  type="button"
+  onClick={() => handleShare?.(id)}
+  className="
+    ml-4
+    flex
+    items-center
+    gap-2
+    rounded-xl
+    px-3.5
+    py-2.5
+    text-sm
+    font-medium
+    text-text-secondary
+    transition cursor-pointer
+    hover:bg-surface-2
+    hover:text-primary
+  "
+>
+  <Share2 size={18} />
+  Share
+</button>
 </div>
     </article>
   )
