@@ -142,15 +142,6 @@ useEffect(() => {
   }
 }, []) 
 
-  const handleCreatePostClick = () => {
-    if (!tokenStore.get()) {
-      setGateAction("post")
-      setShowGate(true)
-      return
-    }
-    // setShowCreatePost(true)
-  }
-
 function formatTime(iso: string) {
   return new Date(iso).toLocaleDateString("en-IN", {
     day: "numeric",

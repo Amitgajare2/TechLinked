@@ -23,6 +23,8 @@ import TweetCardSkeleton from '../../Loaders/TweetCardSkeleton';
 import { useLogout } from '@/src/hooks/auth/authHooks';
 import { tokenStore } from '@/src/lib/auth/tokenStore';
 import { useRouter } from "next/navigation";
+import ConfirmModal from '../../Models/ConfirmModal';
+import { useDeletePost } from '@/src/hooks/post/postHooks';
 
 interface Activity {
   icon: LucideIcon;
@@ -93,7 +95,24 @@ const HomePageLayout = (
     "idle" | "copied"
   >("idle");
 
-  const [post,setPost] = useState("");
+  const [post,setPost] = useState(false);
+  const [postId,setPostId] = useState("");
+  const { mutate: deletePost, isPending: deleting } = useDeletePost()
+
+  const preDelete = (id:string)=>{
+     setPost(true);
+     setPostId(id);
+  }
+
+  const handleDeletePost = ()=>{
+     deletePost(postId,{
+      onSuccess:()=>{
+        setPostId("");
+        setPost(false);
+      }
+     });
+  }
+
   const router = useRouter();
 
   const {mutate:logoutuser} = useLogout();
@@ -169,7 +188,7 @@ const onShare = async (postId: string) => {
     <div>
         <div className="hidden md:block">
         <div className="mx-auto w-full max-w-[1800px] px-6 py-8 xl:px-10">
-          <div className="grid w-full sm:grid-cols-[0%_62%_40%] lg:grid-cols-[28%_50%_20%] justify-center">
+          <div className="grid w-full sm:grid-cols-[0%_62%_40%] lg:grid-cols-[20%_45%_20%] justify-center">
 
             {/* LEFT COLUMN */}
   
@@ -294,7 +313,7 @@ const onShare = async (postId: string) => {
               </section>
 
               {/* Communities */}
-              <section className="mt-7">
+              {/* <section className="mt-7">
                 <div className="mb-3 flex items-center justify-between px-1">
                   <h2 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-text-muted">
                     Communities
@@ -337,7 +356,7 @@ const onShare = async (postId: string) => {
                     );
                   })}
                 </div>
-              </section>
+              </section> */}
             </aside>
 
             {/* CENTER COLUMN */}
@@ -349,7 +368,7 @@ const onShare = async (postId: string) => {
               {/* Feed Tabs */}
              
 
-              <section className="rounded-2xl border border-border bg-surface p-4">
+              {/* <section className="rounded-2xl border border-border bg-surface p-4">
                 <div className="flex gap-3">
                   <Avatar initials="AD" />
 
@@ -372,7 +391,7 @@ const onShare = async (postId: string) => {
                     <CalendarDays size={14} />
                   </button>
                 </div>
-              </section>
+              </section> */}
 
               {/* Feed */}
               <section className="mt-6 space-y-4">
@@ -399,6 +418,7 @@ const onShare = async (postId: string) => {
                               isLiked={post.isLiked}
                               handleComment={handleCommentClick}
                               handleShare={onShare}
+                              handleDeletePost={preDelete}
                             />
                           ))}
               </section>
@@ -599,6 +619,7 @@ const onShare = async (postId: string) => {
                               isLiked={post.isLiked}
                               handleComment={handleCommentClick}
                               handleShare={onShare}
+                              handleDeletePost={preDelete}
                             />
                           ))}
           </div>
@@ -606,6 +627,22 @@ const onShare = async (postId: string) => {
         </div>
     
       </div>
+      {
+        post && (
+          <ConfirmModal
+           title='Delete Post'
+           description='are you want to delete these post'
+           onClose={()=>{setPost(false)}}
+           isOpen={post}
+           onConfirm={handleDeletePost}
+           cancelLabel='Cancel'
+           confirmLabel='Delete Post'
+           isLoading={deleting}
+           loadingLabel='deleting post...'
+           variant='danger'
+           />
+        )
+      }
     </div>
   )
 }
