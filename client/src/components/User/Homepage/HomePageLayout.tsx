@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -7,7 +7,6 @@ import {
   CalendarDays,
   CircleCheck,
   Image as ImageIcon,
-  Plus,
   Trophy,
   LucideIcon ,
   Video,
@@ -21,6 +20,9 @@ import OpportunityCard from '../../homePage/OpportunityCard/OpportunityCard';
 import ActivityCard from '../../homePage/ActivityCard/ActivityCard';
 import TweetCard from '../Post/TweetCard';
 import TweetCardSkeleton from '../../Loaders/TweetCardSkeleton';
+import { useLogout } from '@/src/hooks/auth/authHooks';
+import { tokenStore } from '@/src/lib/auth/tokenStore';
+import { useRouter } from "next/navigation";
 
 interface Activity {
   icon: LucideIcon;
@@ -92,6 +94,31 @@ const HomePageLayout = (
   >("idle");
 
   const [post,setPost] = useState("");
+  const router = useRouter();
+
+  const {mutate:logoutuser} = useLogout();
+  const [login,setLogin] = useState(false);
+
+  useEffect(()=>{
+  const token = tokenStore.get(); 
+   if(token){
+    setLogin(true);
+   }
+  },[])
+
+  const handleLogout = () => {
+
+    if(!login){
+      router.replace("/login");
+      return;
+    }
+
+  logoutuser(undefined, {
+    onSuccess: () => {
+      setLogin(false);
+    },
+  });
+};
 
 const onShare = async (postId: string) => {
   const post = posts?.find((post: any) => post.id === postId);
@@ -206,6 +233,10 @@ const onShare = async (postId: string) => {
                   <button className="ui-button-primary mt-5 flex h-11 w-full items-center justify-center">
                     My Profile
                   </button>
+
+                    <button className="border rounded-lg cursor-pointer mt-5 flex h-11 w-full items-center justify-center" onClick={handleLogout}>
+                    {login ? "Logout" : "Login"}
+                  </button>
                 </div>
               </section>
 
@@ -313,37 +344,10 @@ const onShare = async (postId: string) => {
   
             <main className="min-w-0 px-2">
 
-              {/* Greeting */}
-              <div className="mb-7 px-1">
-                <p className="text-xs font-medium uppercase tracking-[0.16em] text-text-muted">
-                  Hospitality community
-                </p>
-
-                <h2 className="mt-2 text-[27px] font-semibold tracking-[-0.03em]">
-                  Good morning, Ananya
-                </h2>
-
-                <p className="mt-1 text-sm text-text-muted">
-                  Discover what&apos;s happening in hospitality.
-                </p>
-              </div>
+           
 
               {/* Feed Tabs */}
-              <div className="mb-4 flex items-center border-b border-border">
-                <button className="relative px-4 pb-3 text-sm font-medium text-text-primary">
-                  Everyone
-
-                  <span className="absolute bottom-0 left-4 right-4 h-[2px] rounded-full bg-primary" />
-                </button>
-
-                <button className="px-4 pb-3 text-sm text-text-subtle transition hover:text-text-primary">
-                  Following
-                </button>
-
-                <button className="px-4 pb-3 text-sm text-text-subtle transition hover:text-text-primary">
-                  My College
-                </button>
-              </div>
+             
 
               <section className="rounded-2xl border border-border bg-surface p-4">
                 <div className="flex gap-3">
@@ -367,47 +371,6 @@ const onShare = async (postId: string) => {
                     Schedule
                     <CalendarDays size={14} />
                   </button>
-                </div>
-              </section>
-
-              <section className="mt-5">
-                <div className="mb-3 flex items-center justify-between px-1">
-                  <h3 className="text-sm font-semibold">
-                    Stories
-                  </h3>
-
-                  <button className="text-xs text-text-muted">
-                    View all
-                  </button>
-                </div>
-
-                <div className="flex gap-3 overflow-hidden">
-                  {stories.map((story:any) => (
-                    <div
-                      key={story.name}
-                      className="min-w-[67px] text-center"
-                    >
-                      <div
-                        className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full p-[2px] ${
-                          story.own
-                            ? "border border-dashed border-text-subtle"
-                            : "bg-primary"
-                        }`}
-                      >
-                        <div className="flex h-full w-full items-center justify-center rounded-full bg-surface-2 text-xs font-semibold">
-                          {story.own ? (
-                            <Plus size={17} className="text-primary" />
-                          ) : (
-                            story.initials
-                          )}
-                        </div>
-                      </div>
-
-                      <p className="mt-2 truncate text-[11px] text-text-muted">
-                        {story.name}
-                      </p>
-                    </div>
-                  ))}
                 </div>
               </section>
 
@@ -552,7 +515,7 @@ const onShare = async (postId: string) => {
 
       <div className="block md:hidden">
         <div className="px-4 pb-8 pt-6">
-          <div className="mb-7">
+          {/* <div className="mb-7">
             <p className="text-[10px] uppercase tracking-[0.16em] text-text-subtle">
               Hospitality community
             </p>
@@ -601,15 +564,11 @@ const onShare = async (postId: string) => {
                 </p>
               </div>
             ))}
-          </div>
+          </div> */}
 
           <div className="mt-6 flex border-b border-border">
             <button className="border-b-2 border-primary px-3 pb-3 text-sm font-medium">
               Everyone
-            </button>
-
-            <button className="px-3 pb-3 text-sm text-text-subtle">
-              Following
             </button>
 
             <button className="px-3 pb-3 text-sm text-text-subtle">

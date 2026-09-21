@@ -6,33 +6,60 @@ datasource db {
   provider = "postgresql"
 }
 
+// ========================================
+// USER
+// ========================================
+
 model User {
-  id               String            @id @default(uuid())
-  email            String            @unique
-  phone            String            @unique
-  passwordHash     String
-  phoneVerified    Boolean           @default(false)
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
-  FirstName        String
-  LastName         String
-  bio              String?
-  dateOfBirth      DateTime?
-  education        String?
-  gender           String?
-  githubUrl        String?
-  linkedinUrl      String?
-  location         String?
-  portfolioUrl     String?
-  profilePhoto     String?
-  resumeUrl        String?
-  skills           String?
-  comments         Comment[]
-  otpVerifications OtpVerification[]
-  posts            Post[]
-  postLikes        PostLike[]
+  id            String  @id @default(uuid())
+  email         String  @unique
+  phone         String  @unique
+  passwordHash  String
+  phoneVerified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  FirstName String
+  LastName  String
+
+  bio          String?
+  dateOfBirth  DateTime?
+  education    String?
+  gender       String?
+  githubUrl    String?
+  linkedinUrl  String?
+  location     String?
+  portfolioUrl String?
+  profilePhoto String?
+  resumeUrl    String?
+
+  // Posts
+  posts     Post[]
+  comments  Comment[]
+  postLikes PostLike[]
+
+  // Authentication
   refreshTokens    RefreshToken[]
+  otpVerifications OtpVerification[]
+
+  // Profile
+  skills           UserSkill[]
+  certifications   Certification[]
+  languages        UserLanguage[]
+  educationRecords Education[]
+  competitions     Competition[]
+  activities       Activity[]
+
+  // Collaboration Projects
+  ownedProjects       Project[]            @relation("OwnedProjects")
+  projectApplications ProjectApplication[]
+  projectMemberships  ProjectMember[]
 }
+
+// ========================================
+// AUTHENTICATION
+// ========================================
 
 model RefreshToken {
   id        String    @id @default(uuid())
@@ -41,7 +68,8 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime  @default(now())
   revokedAt DateTime?
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
@@ -53,36 +81,45 @@ model OtpVerification {
   verifiedAt DateTime?
   createdAt  DateTime  @default(now())
   sessionId  String
-  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([sessionId])
 }
 
+// ========================================
+// POSTS
+// ========================================
+
 model Post {
-  id        String     @id @default(uuid())
-  userId    String
-  imageUrl  String
-  caption   String?
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  comments  Comment[]
-  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  likes     PostLike[]
+  id       String  @id @default(uuid())
+  userId   String
+  imageUrl String?
+  caption  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments Comment[]
+  likes    PostLike[]
 
   @@index([userId])
   @@index([createdAt])
 }
 
 model Comment {
-  id        String   @id @default(uuid())
-  postId    String
-  userId    String
-  content   String
+  id      String @id @default(uuid())
+  postId  String
+  userId  String
+  content String
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([postId])
   @@index([userId])
@@ -90,15 +127,222 @@ model Comment {
 }
 
 model PostLike {
-  id        String   @id @default(uuid())
-  postId    String
-  userId    String
+  id     String @id @default(uuid())
+  postId String
+  userId String
+
   createdAt DateTime @default(now())
-  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([postId, userId])
   @@index([postId])
   @@index([userId])
   @@index([createdAt])
+}
+
+// ========================================
+// PROFILE - SKILLS
+// ========================================
+
+model UserSkill {
+  id        String   @id @default(uuid())
+  userId    String
+  skill     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, skill])
+  @@index([userId])
+}
+
+// ========================================
+// PROFILE - CERTIFICATIONS
+// ========================================
+
+model Certification {
+  id            String    @id @default(uuid())
+  userId        String
+  name          String
+  issuer        String?
+  issueDate     DateTime?
+  credentialUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ========================================
+// PROFILE - LANGUAGES
+// ========================================
+
+model UserLanguage {
+  id       String  @id @default(uuid())
+  userId   String
+  language String
+  level    String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ========================================
+// PROFILE - EDUCATION
+// ========================================
+
+model Education {
+  id          String    @id @default(uuid())
+  userId      String
+  institution String
+  degree      String?
+  field       String?
+  startDate   DateTime?
+  endDate     DateTime?
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ========================================
+// PROFILE - COMPETITIONS
+// ========================================
+
+model Competition {
+  id             String    @id @default(uuid())
+  userId         String
+  name           String
+  organization   String?
+  position       String?
+  date           DateTime?
+  description    String?
+  certificateUrl String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ========================================
+// PROFILE - ACTIVITIES
+// ========================================
+
+model Activity {
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  description String?
+  type        String?
+  date        DateTime?
+  url         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ========================================
+// PROJECT ENUMS
+// ========================================
+
+enum ProjectStatus {
+  OPEN
+  FULL
+  COMPLETED
+  CANCELLED
+}
+
+enum ProjectApplicationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+// ========================================
+// PROJECT
+// ========================================
+
+model Project {
+  id              String        @id @default(uuid())
+  ownerId         String
+  title           String
+  description     String?
+  imageUrl        String?
+  projectUrl      String?
+  githubUrl       String?
+  requiredMembers Int
+  status          ProjectStatus @default(OPEN)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  owner User @relation("OwnedProjects", fields: [ownerId], references: [id], onDelete: Cascade)
+
+  applications ProjectApplication[]
+  members      ProjectMember[]
+
+  @@index([ownerId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ========================================
+// PROJECT APPLICATION
+// ========================================
+
+model ProjectApplication {
+  id          String                   @id @default(uuid())
+  projectId   String
+  applicantId String
+  message     String?
+  status      ProjectApplicationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  applicant User    @relation(fields: [applicantId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, applicantId])
+  @@index([projectId])
+  @@index([applicantId])
+  @@index([status])
+}
+
+// ========================================
+// PROJECT MEMBERS
+// ========================================
+
+model ProjectMember {
+  id        String   @id @default(uuid())
+  projectId String
+  userId    String
+  joinedAt  DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
 }

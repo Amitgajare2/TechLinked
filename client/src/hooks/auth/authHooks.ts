@@ -157,20 +157,15 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logout,
 
-    onSuccess: () => {
-      tokenStore.set(null);
+  onSuccess: () => {
+  tokenStore.clear();
 
-      // Refresh current user data
-      queryClient.invalidateQueries({
-        queryKey: ["me"],
-      });
+  queryClient.clear();
 
-      toast.success("Logged out successfully");
+  toast.success("Logged out successfully");
 
-      setTimeout(() => {
-        router.push("/");
-      }, 500);
-    },
+  router.replace("/login");
+},
 
     onError: () => {
       toast.error("Error logging out. Please try again.");

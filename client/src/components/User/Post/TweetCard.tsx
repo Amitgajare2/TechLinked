@@ -61,7 +61,7 @@ export default function TweetCard({
     ? `${API_BASE}${avatar}`
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
 
-  const imgSrc = imageUrl.startsWith("http")
+  const imgSrc = imageUrl?.startsWith("http")
     ? imageUrl
     : `${API_BASE}${imageUrl}`
 
@@ -100,11 +100,13 @@ export default function TweetCard({
       </div>
 
       <div className="mt-4 rounded-2xl overflow-hidden bg-gray-100">
-        <img
+        {
+          imageUrl && <img
           src={imgSrc}
           alt="Post"
           className="w-full object-cover max-h-96"
         />
+        }
       </div>
 
       {editing ? (

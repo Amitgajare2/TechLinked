@@ -13,6 +13,7 @@ import profileRoutes from "./Routes/User/profile.routes.js";
 import postRoutes from "./Routes/postRoutes/post.routes.js";
 import commentRoutes from "./Routes/postRoutes/comment.routes.js";
 import likeRoutes from "./Routes/postRoutes/like.routes.js";
+import projectRoutes from "./Routes/projectRoutes/project.route.js"
 
 import { startServer } from "./startServer/startServer.js";
 
@@ -53,6 +54,8 @@ app.use("/api/posts", postRoutes);
 app.use("/api", commentRoutes);
 
 app.use("/api", likeRoutes);
+
+app.use("/api/projects",projectRoutes);
 
 
 app.get("/", (req, res) => {

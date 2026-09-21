@@ -444,7 +444,6 @@ export const refreshAccessToken = async (req, res, next) => {
       });
     }
 
-    // Make sure this is a refresh token
     if (decoded.tokenType !== "refresh") {
       return res.status(401).json({
         success: false,
@@ -476,22 +475,11 @@ export const refreshAccessToken = async (req, res, next) => {
       }
     }
 
-
+    // 6. Token is not an active refresh token
     if (!matchedToken) {
-      await prisma.refreshToken.updateMany({
-        where: {
-          userId: decoded.userId,
-          revokedAt: null,
-        },
-        data: {
-          revokedAt: new Date(),
-        },
-      });
-
       return res.status(401).json({
         success: false,
-        message:
-          "Refresh token reuse detected. Please login again.",
+        message: "Refresh token is invalid or has already been used",
       });
     }
 

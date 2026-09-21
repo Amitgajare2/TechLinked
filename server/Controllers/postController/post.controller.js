@@ -8,22 +8,16 @@ import {
   updatePostSchema,
 } from "../../Validators/post.schema.js";
 
-
 export const createPost = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
-    if (!req.file) {
-      return res.status(400).json({
-        success: false,
-        message: "Post image is required",
-      });
-    }
-
     const validation = createPostSchema.safeParse(req.body);
 
     if (!validation.success) {
-      await fs.unlink(req.file.path).catch(() => {});
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(() => {});
+      }
 
       return res.status(400).json({
         success: false,
@@ -34,7 +28,9 @@ export const createPost = async (req, res, next) => {
 
     const { caption } = validation.data;
 
-    const imageUrl = `/uploads/posts/${req.file.filename}`;
+    const imageUrl = req.file
+      ? `/uploads/posts/${req.file.filename}`
+      : null;
 
     const post = await prisma.post.create({
       data: {
@@ -66,10 +62,13 @@ export const createPost = async (req, res, next) => {
       data: post,
     });
   } catch (error) {
+    if (req.file) {
+      await fs.unlink(req.file.path).catch(() => {});
+    }
+
     next(error);
   }
 };
-
 
 export const getPosts = async (req, res, next) => {
   try {
@@ -104,7 +103,6 @@ export const getPosts = async (req, res, next) => {
       },
     });
 
-    // Find which posts the current user has liked
     let likedPostIds = new Set();
 
     if (userId && posts.length > 0) {
@@ -321,8 +319,6 @@ export const updatePost = async (req, res, next) => {
   }
 };
 
-
-
 export const deletePost = async (req, res, next) => {
   try {
     const userId = req.user.userId;
@@ -356,13 +352,6 @@ export const deletePost = async (req, res, next) => {
         id,
       },
     });
-
-    const imagePath = path.join(
-      process.cwd(),
-      existingPost.imageUrl.replace(/^\/+/, "")
-    );
-
-    await fs.unlink(imagePath).catch(() => {});
 
     return res.status(200).json({
       success: true,
