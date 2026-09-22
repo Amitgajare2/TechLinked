@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -9,10 +9,13 @@ import AuthLayout from "@/src/components/auth/AuthLayout";
 import FormField from "@/src/components/auth/FormField";
 import { loginSchema, type LoginFormValues } from "@/src/lib/validations/auth";
 import { useLogin } from "@/src/hooks/auth/authHooks";
+import { tokenStore } from "@/src/lib/auth/tokenStore";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const { mutate: loginMutate, isPending: isLoggingIn } = useLogin();
+  const router = useRouter();
 
   const {
     register,
@@ -22,6 +25,15 @@ export default function LoginPage() {
     resolver: yupResolver(loginSchema),
     defaultValues: { email: "", password: "" },
   });
+
+
+    useEffect(()=>{
+    const token = tokenStore.get(); 
+     if(token){
+      router.back();
+     }
+    },[])
+  
 
   const onSubmit = async (values: LoginFormValues) => {
     loginMutate({ ...values, remember });

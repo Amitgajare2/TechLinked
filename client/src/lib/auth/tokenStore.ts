@@ -5,37 +5,8 @@ export const tokenStore = {
     if (typeof window === "undefined") {
       return null;
     }
-    const directToken = localStorage.getItem(ACCESS_TOKEN_KEY);
 
-    if (directToken) {
-      return directToken;
-    }
-
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-
-      if (!key?.endsWith("-auth-token")) {
-        continue;
-      }
-
-      const value = localStorage.getItem(key);
-
-      if (!value) {
-        continue;
-      }
-
-      try {
-        const session = JSON.parse(value);
-
-        if (session?.access_token) {
-          return session.access_token;
-        }
-      } catch {
-        continue;
-      }
-    }
-
-    return null;
+    return localStorage.getItem(ACCESS_TOKEN_KEY);
   },
 
   set(token: string | null) {

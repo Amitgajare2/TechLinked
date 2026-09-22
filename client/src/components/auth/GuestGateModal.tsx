@@ -12,7 +12,7 @@ interface GuestGateModalProps {
 const actionCopy: Record<NonNullable<GuestGateModalProps["action"]>, { icon: typeof Heart; text: string }> = {
   like: { icon: Heart, text: "like this post" },
   comment: { icon: MessageSquarePlus, text: "join the conversation" },
-  post: { icon: MessageSquarePlus, text: "share your own posts" },
+  post: { icon: MessageSquarePlus, text: "create your own posts" },
   connect: { icon: Users, text: "connect with tech professionals" },
 };
 

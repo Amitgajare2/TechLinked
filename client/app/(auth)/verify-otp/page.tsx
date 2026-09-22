@@ -21,12 +21,22 @@ import {
   useResendOtp,
   useSendOtp,
 } from "@/src/hooks/auth/authHooks";
+import { tokenStore } from "@/src/lib/auth/tokenStore";
 
 const RESEND_SECONDS = 30;
 
 export default function VerifyOtpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+
+
+     useEffect(()=>{
+      const token = tokenStore.get(); 
+       if(token){
+        router.back();
+       }
+      },[])
+    
 
   
   const verificationToken = searchParams.get("token") ?? "";

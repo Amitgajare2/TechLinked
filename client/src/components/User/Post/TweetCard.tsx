@@ -1,9 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { useDeletePost, useUpdatePost } from "@/src/hooks/post/postHooks"
-import { Star, CommentDots, Share   } from 'reicon-react';
-import { env } from "process";
+import { useUpdatePost } from "@/src/hooks/post/postHooks"
+import { Star, Edit,Trash2   } from 'reicon-react';
 import { MessageCircle, Share2 } from "lucide-react";
 
 const API_BASE = "http://localhost:5000"
@@ -24,6 +23,7 @@ interface TweetCardProps {
   isLiked: boolean;
   handleComment?: (postId: string) => void,
   handleShare?: (postId: string) => void;
+  handleDeletePost?: (postId: string) => void;
 }
 
 export default function TweetCard({
@@ -41,14 +41,15 @@ export default function TweetCard({
   handleLike,
   isLiked,
   handleComment,
-  handleShare
+  handleShare,
+  handleDeletePost
 }: TweetCardProps) {
 
   console.log(isLiked)
   const [editing, setEditing] = useState(false)
   const [caption, setCaption] = useState(content ?? "")
 
-  const { mutate: deletePost, isPending: deleting } = useDeletePost()
+
   const { mutate: updatePost, isPending: updating } = useUpdatePost()
 
   const isOwner = currentUserId && postUserId && currentUserId === postUserId
@@ -61,7 +62,7 @@ export default function TweetCard({
     ? `${API_BASE}${avatar}`
     : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`
 
-  const imgSrc = imageUrl.startsWith("http")
+  const imgSrc = imageUrl?.startsWith("http")
     ? imageUrl
     : `${API_BASE}${imageUrl}`
 
@@ -84,27 +85,28 @@ export default function TweetCard({
           <div className="flex items-center gap-1">
             <button
               onClick={() => setEditing((v) => !v)}
-              className="rounded-full px-2.5 py-1 text-xs text-gray-500 hover:bg-black/5 transition"
+              className="rounded-full px-2.5 cursor-pointer py-1 text-xs text-gray-500 hover:bg-black/5 transition"
             >
-              Edit
+              <Edit/>
             </button>
             <button
-              onClick={() => deletePost(id)}
-              disabled={deleting}
-              className="rounded-full px-2.5 py-1 text-xs text-red-500 hover:bg-red-50 transition disabled:opacity-50"
+              onClick={() => handleDeletePost?.(id)}
+              className="rounded-full px-2.5 cursor-pointer py-1 text-xs text-red-500 hover:bg-red-50 transition disabled:opacity-50"
             >
-              {deleting ? "…" : "Delete"}
+             <Trash2/>
             </button>
           </div>
         )}
       </div>
 
       <div className="mt-4 rounded-2xl overflow-hidden bg-gray-100">
-        <img
+        {
+          imageUrl && <img
           src={imgSrc}
           alt="Post"
           className="w-full object-cover max-h-96"
         />
+        }
       </div>
 
       {editing ? (

@@ -13,6 +13,8 @@ import {
 } from "@/src/lib/validations/auth";
 import { useRegister } from "@/src/hooks/auth/authHooks";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { tokenStore } from "@/src/lib/auth/tokenStore";
 
 export default function RegisterPage() {
 
@@ -34,6 +36,14 @@ const router = useRouter();
       confirmPassword: "",
     },
   });
+
+     useEffect(()=>{
+      const token = tokenStore.get(); 
+       if(token){
+        router.back();
+       }
+      },[])
+    
 
   const onSubmit = async (values: RegisterFormValues) => {
     const payload: RegisterPayload = {
