@@ -1,153 +1,92 @@
 @import "tailwindcss";
 
-:root {
-
-  --app-primary: #397A68;
-  --app-primary-hover: #2F6B5B;
-  --app-primary-soft: #E5F2ED;
-  --app-primary-border: #B9D9CD;
-
-
-  /* BACKGROUNDS*/
-
-  /* Main page */
-  --app-background: #F3F8F5;
-
-  /* Cards */
-  --app-surface: #FFFFFF;
-
-  /* Card hover */
-  --app-surface-hover: #F0F7F3;
-
-  /* Secondary sections */
-  --app-surface-2: #E5F0EB;
-
-  /* Inputs / composer */
-  --app-surface-dark: #F6FAF8;
-
-
-  /*TEXT*/
-
-  --app-text-primary: #16382E;
-  --app-text-secondary: #4E6960;
-  --app-text-muted: #748A82;
-  --app-text-subtle: #9AAEA6;
-
-
-  /*BORDERS*/
-
-  --app-border: #DCE9E4;
-  --app-border-strong: #C7DBD3;
-  --app-border-hover: #9FC6B8;
-
-
-  /* STATUS*/
-
-  --app-success: #4F9B72;
-  --app-danger: #D96D6D;
-  --app-warning: #D59A45;
-  --app-info: #5D91B5;
-
-
-  /*OVERLAY*/
-
-  --app-overlay: rgba(22, 56, 46, 0.25);
-}
-/*TAILWIND COLOR MAPPING */
-
+/*
+  Tailwind v4 is CSS-first: everything that used to live in
+  tailwind.config.ts now lives here, inside @theme. Each --color-*,
+  --font-*, --radius-* and --shadow-* variable below both (a) becomes a
+  real CSS custom property you can use anywhere, and (b) automatically
+  generates the matching utility classes (bg-*, text-*, border-*,
+  stroke-*, rounded-*, shadow-*, etc.) — no content[] array needed either;
+  v4 scans the project automatically.
+*/
 @theme {
-  --color-primary: var(--app-primary);
-  --color-primary-hover: var(--app-primary-hover);
-  --color-primary-soft: var(--app-primary-soft);
-  --color-primary-border: var(--app-primary-border);
+  --color-page: #f8f7f4;
 
-  --color-background: var(--app-background);
-  --color-surface: var(--app-surface);
-  --color-surface-hover: var(--app-surface-hover);
-  --color-surface-2: var(--app-surface-2);
-  --color-surface-dark: var(--app-surface-dark);
+  --color-ink: #262321;
+  --color-ink-soft: #4a4541;
+  --color-ink-muted: #8a8580;
 
-  --color-text-primary: var(--app-text-primary);
-  --color-text-secondary: var(--app-text-secondary);
-  --color-text-muted: var(--app-text-muted);
-  --color-text-subtle: var(--app-text-subtle);
+  --color-brand-orange: #f2790c;
+  --color-brand-orange-dark: #d9690a;
+  --color-brand-orange-soft: #ffeedd;
+  --color-brand-orange-pale: #fff2e5;
 
-  --color-border: var(--app-border);
-  --color-border-strong: var(--app-border-strong);
-  --color-border-hover: var(--app-border-hover);
+  --color-teal: #0f5f56;
+  --color-teal-dark: #0c4842;
+  --color-teal-link: #317d78;
+  --color-teal-soft: #cfeeea;
 
-  --color-success: var(--app-success);
-  --color-danger: var(--app-danger);
-  --color-warning: var(--app-warning);
-  --color-info: var(--app-info);
+  --color-mint-soft: #e1f1ec;
+  --color-mint-text: #2f8f63;
 
-  --color-overlay: var(--app-overlay);
+  --color-sand: #ede4d3;
+  --color-line: #ece7dd;
+
+  /* next/font sets --font-inter / --font-poppins on <html> in layout.tsx;
+     we point Tailwind's font-sans / font-display utilities at them here
+     so the rest of the app just uses font-sans / font-display. */
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+  --font-display: var(--font-poppins), system-ui, sans-serif;
+
+  --radius-card: 18px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 1px 2px rgba(38, 35, 33, 0.04), 0 1px 14px rgba(38, 35, 33, 0.05);
 }
 
-/* REUSABLE UI COMPONENTS */
-
-@layer components {
-  .ui-card {
-    @apply rounded-2xl border bg-surface;
-    border-color: var(--app-border);
+@layer base {
+  html {
+    scroll-behavior: smooth;
   }
 
-  .ui-card-hover {
-    @apply transition duration-200;
+  body {
+    @apply bg-page text-ink antialiased;
   }
 
-  .ui-card-hover:hover {
-    background-color: var(--app-surface-hover);
-    border-color: var(--app-primary-border);
+  /* Visible keyboard focus for accessibility, kept subtle to match the brand */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-orange);
+    outline-offset: 2px;
+    border-radius: 4px;
   }
 
-  .ui-button-primary {
-    @apply rounded-xl font-semibold text-black transition;
-    background-color: var(--app-primary);
-  }
-
-  .ui-button-primary:hover {
-    background-color: var(--app-primary-hover);
-  }
-
-  .ui-button-secondary {
-    @apply rounded-xl border text-text-secondary transition;
-    background-color: var(--app-surface-2);
-    border-color: var(--app-border);
-  }
-
-  .ui-button-secondary:hover {
-    color: var(--app-text-primary);
-    border-color: var(--app-border-hover);
-  }
-
-  .ui-input {
-    @apply rounded-xl border text-sm outline-none;
-    background-color: var(--app-surface-dark);
-    border-color: var(--app-border);
-    color: var(--app-text-primary);
-  }
-
-  .ui-input::placeholder {
-    color: var(--app-text-subtle);
-  }
-
-  .ui-input:focus {
-    border-color: var(--app-primary-border);
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
-/* =========================================================
-   BASE
-========================================================= */
+@layer utilities {
+  /* Tailwind v4 includes line-clamp-* natively; kept explicit here for
+     clarity and as a safe fallback. */
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 
-html,
-body {
-  background: var(--app-background);
-  color: var(--app-text-primary);
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
 }
-
-body {
-  margin: 0;
-}
-

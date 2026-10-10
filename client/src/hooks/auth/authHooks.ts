@@ -94,10 +94,6 @@ export const useSendOtp = () => {
   return useMutation({
     mutationFn: sendOtp,
 
-    onSuccess: () => {
-      toast.success("Verification code sent");
-    },
-
     onError: (error: AxiosError<ErrorResponse>) => {
       const message =
         error.response?.data?.message || "Something went wrong";
@@ -139,10 +135,6 @@ export const useVerifyOtp = () => {
 export const useResendOtp = () => {
   return useMutation({
     mutationFn: sendOtp,
-
-    onSuccess: () => {
-      toast.success("A new code has been sent");
-    },
 
     onError: () => {
       toast.error("Couldn't resend the code. Please try again.");

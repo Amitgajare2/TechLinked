@@ -1,73 +1,58 @@
 "use client";
+import { type ClipboardEvent, type KeyboardEvent } from "react";
+import { useRef, useState } from "react";
 
-import { useRef, type ChangeEvent, type ClipboardEvent, type KeyboardEvent } from "react";
+const OTP_LENGTH = 6;
 
-interface OtpInputProps {
-  length?: number;
-  value: string;
-  onChange: (value: string) => void;
-  error?: boolean;
-}
+export const OtpBoxes = ({ onChange, error }: { onChange: (otp: string) => void; error: boolean }) => {
+  const [digits, setDigits] = useState<string[]>(Array(OTP_LENGTH).fill(""));
+  const inputs = useRef<(HTMLInputElement | null)[]>([]);
 
-export default function OtpInput({ length = 6, value, onChange, error }: OtpInputProps) {
-  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
-  const digits = Array.from({ length }, (_, i) => value[i] ?? "");
-
-  const setDigit = (index: number, digit: string) => {
-    const next = digits.slice();
-    next[index] = digit;
+  const update = (next: string[]) => {
+    setDigits(next);
     onChange(next.join(""));
   };
 
-  const handleChange = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
-    const raw = e.target.value.replace(/\D/g, "");
-    if (!raw) {
-      setDigit(index, "");
-      return;
-    }
-    // browsers sometimes fire onChange with more than one char pasted into a single box
-    const char = raw[raw.length - 1];
-    setDigit(index, char);
-    if (index < length - 1) {
-      inputRefs.current[index + 1]?.focus();
-    }
+  const handleChange = (i: number, value: string) => {
+    const digit = value.replace(/\D/g, "").slice(-1);
+    update(digits.map((d, idx) => (idx === i ? digit : d)));
+    if (digit && i < OTP_LENGTH - 1) inputs.current[i + 1]?.focus();
   };
 
-  const handleKeyDown = (index: number) => (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Backspace" && !digits[index] && index > 0) {
-      inputRefs.current[index - 1]?.focus();
-    }
+  const handleKeyDown = (i: number, e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !digits[i] && i > 0) inputs.current[i - 1]?.focus();
   };
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
-    if (!pasted) return;
     e.preventDefault();
-    onChange(pasted);
-    const focusIndex = Math.min(pasted.length, length - 1);
-    inputRefs.current[focusIndex]?.focus();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, OTP_LENGTH);
+    if (!pasted) return;
+    update(Array.from({ length: OTP_LENGTH }, (_, i) => pasted[i] ?? ""));
+    inputs.current[Math.min(pasted.length, OTP_LENGTH - 1)]?.focus();
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 sm:gap-3" onPaste={handlePaste}>
-      {digits.map((digit, index) => (
+    <div className="flex justify-center gap-2 lg:gap-3">
+      {digits.map((digit, i) => (
         <input
-          key={index}
+          key={i}
           ref={(el) => {
-            inputRefs.current[index] = el;
+            inputs.current[i] = el;
           }}
-          type="text"
-          inputMode="numeric"
-          autoComplete={index === 0 ? "one-time-code" : "off"}
-          maxLength={1}
           value={digit}
-          onChange={handleChange(index)}
-          onKeyDown={handleKeyDown(index)}
-          className={`w-11 h-12 sm:w-12 sm:h-14 text-center text-[18px] font-medium rounded-md bg-[#122C52] border outline-none transition-all text-[#EDEFF7] focus:ring-4 focus:ring-[#4C5FFF]/15 ${
-            error ? "border-[#FF6B6B]" : "border-[#1E3A63] focus:border-[#4C5FFF]"
+          onChange={(e) => handleChange(i, e.target.value)}
+          onKeyDown={(e) => handleKeyDown(i, e)}
+          onPaste={handlePaste}
+          inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          maxLength={1}
+          autoFocus={i === 0}
+          aria-label={`Digit ${i + 1}`}
+          className={`size-9 rounded-md border bg-white text-center text-sm font-semibold text-gray-900 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20 lg:size-12 lg:text-lg ${
+            error ? "border-red-500" : "border-gray-300"
           }`}
         />
       ))}
     </div>
   );
-}
+};

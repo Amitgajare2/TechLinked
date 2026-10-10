@@ -27,7 +27,7 @@ export default function NavBar({setPost}:any) {
 
   return (
     <>
-      <nav className="fixed bottom-5 left-1/2 z-40 flex h-[68px] w-[calc(100%-32px)] max-w-lg -translate-x-1/2 items-center justify-between rounded-[24px] border border-white/50 bg-surface/45 px-5 shadow-[0_8px_40px_rgba(22,56,46,0.12)] backdrop-blur-2xl backdrop-saturate-150">
+      <nav className="fixed bottom-5 left-1/2 z-40 flex h-[68px] w-[calc(100%-32px)] sm:hidden max-w-lg -translate-x-1/2 items-center justify-between rounded-[24px] border border-white/50 bg-surface/45 px-5 shadow-[0_8px_40px_rgba(22,56,46,0.12)] backdrop-blur-2xl backdrop-saturate-150">
         <Link href="/" aria-label="Home" className={`flex h-11 w-11 items-center justify-center rounded-full transition ${isActive("/") ? "bg-primary text-white shadow-sm" : "text-text-secondary hover:bg-primary-soft"}`}>
           <Home size={20} />
         </Link>

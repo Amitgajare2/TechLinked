@@ -1,5 +1,11 @@
 "use client";
 import GuestGateModal from "@/src/components/auth/GuestGateModal";
+import ComposeBox from "@/src/components/homePage/ComposeBox";
+import LeftSidebar from "@/src/components/homePage/LeftSidebar";
+import Navbar from "@/src/components/homePage/Navbar";
+import PostCard from "@/src/components/homePage/PostCard";
+import RightSidebar from "@/src/components/homePage/RightSidebar";
+import WelcomeBanner from "@/src/components/homePage/WelcomeBanner";
 import HomePageLayout from "@/src/components/User/Homepage/HomePageLayout";
 import { useMe } from "@/src/hooks/auth/authHooks";
 import { useGetPosts, useHandleLike } from "@/src/hooks/post/postHooks";
@@ -165,21 +171,27 @@ console.log("posts",posts)
   return (
     <main className="min-h-screen bg-background text-text-primary">
       {/* DESKTOP */}
-      
-      <HomePageLayout
-      activities={activities}
-      communities={communities}
-      opportunities={opportunities}
-      skills={skills}
-      stories={stories}
-      user={data?.data}
-      posts={posts}
-      formatTime={formatTime}
-      currentUserId={currentUserId}
-      handleLike={handleLike}
-      handleCommentClick={handleCommentClick}
-      postLoading={postLoading}
-      />
+        <div className="min-h-screen bg-page">
+      <Navbar />
+
+      <main className="mx-auto grid max-w-[1400px] grid-cols-1 gap-5 px-4 py-5 sm:gap-6 sm:px-6 sm:py-6 lg:grid-cols-[272px_minmax(0,1fr)_320px] lg:gap-7 lg:px-8 lg:py-8">
+        <div className="order-2 lg:order-1">
+          <LeftSidebar />
+        </div>
+
+        <div className="order-1 flex flex-col gap-5 sm:gap-6 lg:order-2">
+          <WelcomeBanner />
+          <ComposeBox />
+          {posts?.map((post) => (
+            <PostCard key={post.id} post={post} />
+          ))}
+        </div>
+
+        <div className="order-3">
+          <RightSidebar />
+        </div>
+      </main>
+    </div>
 
        {
         showGate && (
