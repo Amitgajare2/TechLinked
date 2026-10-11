@@ -18,7 +18,7 @@ export default function HomeLayout({
 
   return (
     <div className="min-h-screen">
-      <main className="pt-[68px]">
+      <main>
         {children}
       </main>
       <NavBar 
