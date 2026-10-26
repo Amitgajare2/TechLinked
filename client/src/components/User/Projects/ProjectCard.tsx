@@ -25,18 +25,19 @@ function ProjectCard({
         overflow-hidden
         rounded-2xl
         border
-        border-black/5
-        bg-white
+        border-border
+        bg-surface
         shadow-sm
         transition
         hover:-translate-y-1
+        hover:border-primary-border
         hover:shadow-md
       "
     >
 
       {/* IMAGE */}
 
-      <div className="relative h-44 overflow-hidden bg-[#e9f0ed]">
+      <div className="relative h-44 overflow-hidden bg-surface-2">
 
         {project.imageUrl ? (
 
@@ -59,7 +60,7 @@ function ProjectCard({
 
             <FolderKanban
               size={42}
-              className="text-[#397A68]/40"
+              className="text-primary/30"
             />
 
           </div>
@@ -73,18 +74,19 @@ function ProjectCard({
             left-3
             top-3
             rounded-full
-            bg-white/95
+            bg-surface
             px-3
             py-1
             text-xs
             font-semibold
+            shadow-sm
           "
         >
           <span
             className={
               isOpen
-                ? "text-[#397A68]"
-                : "text-gray-500"
+                ? "text-primary"
+                : "text-text-muted"
             }
           >
             {project.status}
@@ -98,11 +100,11 @@ function ProjectCard({
 
       <div className="p-5">
 
-        <h2 className="line-clamp-1 text-lg font-semibold text-gray-900">
+        <h2 className="line-clamp-1 text-lg font-semibold tracking-[-0.02em] text-text-primary">
           {project.title}
         </h2>
 
-        <p className="mt-2 line-clamp-2 min-h-[42px] text-sm leading-5 text-gray-500">
+        <p className="mt-2 line-clamp-2 min-h-[42px] text-sm leading-5 text-text-muted">
           {project.description ||
             "No project description provided."}
         </p>
@@ -119,12 +121,12 @@ function ProjectCard({
 
           <div>
 
-            <p className="text-xs font-medium text-gray-800">
+            <p className="text-xs font-medium text-text-primary">
               {project.owner.FirstName}{" "}
               {project.owner.LastName}
             </p>
 
-            <p className="text-[11px] text-gray-400">
+            <p className="text-[11px] text-text-subtle">
               Project creator
             </p>
 
@@ -147,7 +149,7 @@ function ProjectCard({
           "
         >
 
-          <div className="flex items-center gap-1.5 text-xs text-gray-500">
+          <div className="flex items-center gap-1.5 text-xs text-text-muted">
 
             <Users size={15} />
 
@@ -164,7 +166,7 @@ function ProjectCard({
           {project.spotsAvailable > 0 &&
             project.status === "OPEN" && (
 
-              <span className="text-xs font-semibold text-[#397A68]">
+              <span className="text-xs font-semibold text-primary">
                 {project.spotsAvailable}{" "}
                 {project.spotsAvailable === 1
                   ? "spot"

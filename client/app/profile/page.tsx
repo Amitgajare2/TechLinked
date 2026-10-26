@@ -549,7 +549,7 @@ export default function HomePage() {
 
             {/* RIGHT COLUMN */}
 
-            <aside className="sticky top-8 h-fit pl-6">
+            <aside className="sticky top-8 h-fit pl-6 hidden lg:block">
 
               {/* Opportunities */}
               <section>

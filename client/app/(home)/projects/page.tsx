@@ -4,7 +4,7 @@ import {
   Plus,
 } from "lucide-react";
 
-import { useProjects } from "../../../src/hooks/Project/useProjects";
+// import { useProjects } from "../../../src/hooks/Project/useProjects";
 import ProjectLoader from "@/src/components/User/Projects/ProjectLoader";
 import ProjectCard from "@/src/components/User/Projects/ProjectCard";
 import { useState } from "react";
@@ -13,11 +13,50 @@ import CreateProjectPage from "@/src/components/Models/CreateProjectModal";
 
 
 export default function ProjectsPage() {
-  const {
-    data: projects,
-    isLoading,
-    isError,
-  } = useProjects();
+  // const {
+  //   data: projects,
+  //   isLoading,
+  //   isError,
+  // } = useProjects();
+
+  const projects = [
+    {
+      id: "project-1",
+      title: "Hospitality Guest Experience Dashboard",
+      description: "A collaborative project to design a guest feedback dashboard for boutique hotels.",
+      category: "Product Design",
+      members: 5,
+      createdAt: "2026-10-23T00:00:00.000Z",
+      imageUrl: "",
+      status: "OPEN",
+      currentMembers: 3,
+      requiredMembers: 5,
+      spotsAvailable: 2,
+      owner: {
+        FirstName: "Ananya",
+        LastName: "Deshmukh",
+        profilePhoto: "",
+      },
+    },
+    {
+      id: "project-2",
+      title: "Smart Room Service Workflow",
+      description: "Improving room service coordination and guest response speed using a simple digital workflow.",
+      category: "Operations",
+      members: 4,
+      createdAt: "2026-10-20T00:00:00.000Z",
+      imageUrl: "",
+      status: "OPEN",
+      currentMembers: 2,
+      requiredMembers: 4,
+      spotsAvailable: 2,
+      owner: {
+        FirstName: "Rohan",
+        LastName: "Mehta",
+        profilePhoto: "",
+      },
+    },
+  ];
 
   const [createProjectModal,setCreateProjectModal] = useState(false);
 
@@ -26,28 +65,28 @@ export default function ProjectsPage() {
   };
 
 
-  if (isLoading) {
-    return <ProjectLoader/>
-  }
+  // if (isLoading) {
+  //   return <ProjectLoader/>
+  // }
 
 
-  if (isError) {
-    return (
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <p className="text-sm text-red-500">
-          Failed to load projects. Please try again.
-        </p>
-      </div>
-    );
-  }
+  // if (isError) {
+  //   return (
+  //     <div className="flex min-h-[60vh] items-center justify-center">
+  //       <p className="text-sm text-red-500">
+  //         Failed to load projects. Please try again.
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
 
   return (
-    <main className="min-h-screen bg-[#f8f5f1]">
+    <main className="min-h-screen bg-background text-text-primary">
 
       {/* HEADER */}
 
-      <section className="border-b border-black/5 bg-white">
+      <section className="border-b border-border bg-surface">
 
         <div className="mx-auto max-w-7xl px-4 py-8 md:px-6">
 
@@ -55,16 +94,16 @@ export default function ProjectsPage() {
 
             <div>
 
-              <div className="mb-2 flex items-center gap-2 text-sm text-[#397A68]">
+              <div className="mb-2 flex items-center gap-2 text-sm font-medium text-primary">
                 <FolderKanban size={17} />
                 <span>Projects</span>
               </div>
 
-              <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
+              <h1 className="text-2xl font-bold tracking-[-0.03em] text-text-primary md:text-3xl">
                 Build something together
               </h1>
 
-              <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-text-muted">
                 Discover projects created by students and
                 join teams where you can contribute your skills.
               </p>
@@ -80,14 +119,14 @@ export default function ProjectsPage() {
                 items-center
                 gap-2
                 rounded-xl
-                bg-[#397A68]
+                bg-primary
                 px-4
                 py-2.5
                 text-sm
                 font-semibold
                 text-white
                 transition
-                hover:bg-[#2f6657]
+                hover:bg-primary/90
               "
             >
               <Plus size={18} />

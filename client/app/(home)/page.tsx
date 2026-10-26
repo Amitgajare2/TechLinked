@@ -222,7 +222,7 @@ export default function HomePage() {
           ))}
         </div>
 
-        <div className="order-3">
+        <div className="order-3 hidden lg:block">
           <RightSidebar />
         </div>
       </main>
