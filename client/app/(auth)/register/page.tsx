@@ -12,19 +12,21 @@ import RegisterImg from "@/public/images/registerImage.png"
 import {
   registerSchema,
   type RegisterFormValues,
-  type RegisterPayload,
+  // type RegisterPayload,
 } from "@/src/lib/validations/auth";
-import { useRegister } from "@/src/hooks/auth/authHooks";
-import { tokenStore } from "@/src/lib/auth/tokenStore";
+// import { useRegister } from "@/src/hooks/auth/authHooks";
+// import { tokenStore } from "@/src/lib/auth/tokenStore";
 import { Field, GoogleIcon, HeroCopy, MicrosoftIcon, Swoosh } from "@/src/components/auth/Icons/AuthIcons";
 
 
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { mutate: registerMutate, isPending: isRegistering } = useRegister();
+  // const { mutate: registerMutate, isPending: isRegistering } = useRegister();
+  const isRegistering = false;
   const [accepted, setAccepted] = useState(false);
   const [termsError, setTermsError] = useState(false);
+  const [showUnderWorking, setShowUnderWorking] = useState(false);
 
   const {
     register,
@@ -42,35 +44,39 @@ export default function RegisterPage() {
     },
   });
 
-
   const onSubmit = async (values: RegisterFormValues) => {
-    const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
-    if (isDesktop && !accepted) return setTermsError(true);
+    // const isDesktop = window.matchMedia("(min-width: 1024px)").matches;
+    // if (isDesktop && !accepted) return setTermsError(true);
 
-    const payload: RegisterPayload = {
-      FirstName: values.firstName,
-      LastName: values.lastName,
-      email: values.email,
-      phone: values.phone,
-      password: values.password,
-    };
+    // const payload: RegisterPayload = {
+    //   FirstName: values.firstName,
+    //   LastName: values.lastName,
+    //   email: values.email,
+    //   phone: values.phone,
+    //   password: values.password,
+    // };
 
-    registerMutate(payload, {
-      onSuccess: (data) => {
-        console.log("Registration successful");
-        router.replace(`/verify-otp?token=${data.verificationToken}`);
-      },
-    });
+    // registerMutate(payload, {
+    //   onSuccess: (data) => {
+    //     console.log("Registration successful");
+    //     router.replace(`/verify-otp?token=${data.verificationToken}`);
+    //   },
+    // });
+    setShowUnderWorking(true);
   };
 
   const handleRegisterSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    void handleSubmit(onSubmit, () => {
-      toast.error("Please correct the highlighted fields and try again.");
-    })(event);
+    // void handleSubmit(onSubmit, () => {
+    //   toast.error("Please correct the highlighted fields and try again.");
+    // })(event);
+    setShowUnderWorking(true);
   };
 
-  const social = (provider: string) => console.log({ provider });
+  const social = (provider: string) => {
+    // console.log({ provider });
+    setShowUnderWorking(true);
+  };
 
   return (
     <main className="min-h-screen bg-white lg:flex">
@@ -149,6 +155,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
+              onClick={() => setShowUnderWorking(true)}
               disabled={isSubmitting || isRegistering}
               className="mt-4 h-10 w-full rounded-md bg-orange-500 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60 lg:h-11 lg:text-base"
             >
@@ -201,6 +208,24 @@ export default function RegisterPage() {
           </div>
         </div>
       </section>
+
+      {showUnderWorking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <p className="text-xl font-bold text-gray-900">Under Working</p>
+            <p className="mt-2 text-sm text-gray-600">
+              This feature is currently under development.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowUnderWorking(false)}
+              className="mt-5 w-full rounded-md bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

@@ -10,8 +10,8 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { Eye, EyeOff, Lock, Mail } from "lucide-react";
 
 import { loginSchema, type LoginFormValues } from "@/src/lib/validations/auth";
-import { useLogin } from "@/src/hooks/auth/authHooks";
-import { tokenStore } from "@/src/lib/auth/tokenStore";
+// import { useLogin } from "@/src/hooks/auth/authHooks";
+// import { tokenStore } from "@/src/lib/auth/tokenStore";
 import LoginImg from "@/public/images/registerImage.png"
 import { ErrorTag, GoogleIcon, MicrosoftIcon, Swoosh } from "@/src/components/auth/Icons/AuthIcons";
 
@@ -27,7 +27,9 @@ export default function LoginPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
-  const { mutate: loginMutate, isPending: isLoggingIn } = useLogin();
+  const [showUnderWorking, setShowUnderWorking] = useState(false);
+  // const { mutate: loginMutate, isPending: isLoggingIn } = useLogin();
+  const isLoggingIn = false;
 
   const {
     register,
@@ -38,16 +40,20 @@ export default function LoginPage() {
     defaultValues: { email: "", password: "" },
   });
 
-  useEffect(() => {
-    const token = tokenStore.get();
-    if (token) router.back();
-  }, [router]);
+  // useEffect(() => {
+  //   const token = tokenStore.get();
+  //   if (token) router.back();
+  // }, [router]);
 
   const onSubmit = async (values: LoginFormValues) => {
-    loginMutate({ ...values, remember });
+    // loginMutate({ ...values, remember });
+    setShowUnderWorking(true);
   };
 
-  const social = (provider: string) => console.log({ provider });
+  const social = (provider: string) => {
+    // console.log({ provider });
+    setShowUnderWorking(true);
+  };
 
   const fieldState = (error?: string) => error ? "border-red-500 focus:ring-red-500/20" : "border-gray-300 focus:border-orange-500 focus:ring-orange-500/20";
 
@@ -150,6 +156,7 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              onClick={() => setShowUnderWorking(true)}
               disabled={isLoggingIn || isSubmitting}
               className="mt-4 h-11 w-full rounded-md bg-orange-500 text-base font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -202,6 +209,24 @@ export default function LoginPage() {
           </div>
         </div>
       </section>
+
+      {showUnderWorking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl">
+            <p className="text-xl font-bold text-gray-900">Under Working</p>
+            <p className="mt-2 text-sm text-gray-600">
+              This feature is currently under development.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowUnderWorking(false)}
+              className="mt-5 w-full rounded-md bg-orange-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-orange-600"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

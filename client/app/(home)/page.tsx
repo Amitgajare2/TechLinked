@@ -6,12 +6,12 @@ import Navbar from "@/src/components/homePage/Navbar";
 import PostCard from "@/src/components/homePage/PostCard";
 import RightSidebar from "@/src/components/homePage/RightSidebar";
 import WelcomeBanner from "@/src/components/homePage/WelcomeBanner";
-import HomePageLayout from "@/src/components/User/Homepage/HomePageLayout";
-import { useMe } from "@/src/hooks/auth/authHooks";
-import { useGetPosts, useHandleLike } from "@/src/hooks/post/postHooks";
-import { tokenStore } from "@/src/lib/auth/tokenStore";
-import { useQuery } from "@tanstack/react-query";
-import { jwtDecode } from "jwt-decode";
+// import HomePageLayout from "@/src/components/User/Homepage/HomePageLayout";
+// import { useMe } from "@/src/hooks/auth/authHooks";
+// import { useGetPosts, useHandleLike } from "@/src/hooks/post/postHooks";
+// import { tokenStore } from "@/src/lib/auth/tokenStore";
+// import { useQuery } from "@tanstack/react-query";
+// import { jwtDecode } from "jwt-decode";
 import {
   Building2,
   Flame,
@@ -119,54 +119,87 @@ interface JwtPayload {
 }
 
 export default function HomePage() {
+  // const {mutate:handlelike,isPending:ispendingLike} = useHandleLike();
+  // const { data: posts, isLoading:postLoading, isError } = useGetPosts();
+  // const { data, isLoading } = useMe();
 
-const {mutate:handlelike,isPending:ispendingLike} = useHandleLike();
-const { data: posts, isLoading:postLoading, isError } = useGetPosts();
-const { data, isLoading } = useMe();
-const [currentUserId, setCurrentUserId] = useState("");
- const [showGate, setShowGate] = useState(false);
- const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
- const router = useRouter();
+  const posts = [
+    {
+      id: "static-post-1",
+      caption: "Excited to share our new front office training initiative with hospitality students. Building stronger guest experiences through practical service learning.",
+      imageUrl: "",
+      user: {
+        FirstName: "Ananya",
+        LastName: "Deshmukh",
+        profilePhoto: "",
+        id: "user-1",
+      },
+      createdAt: "2026-10-26T10:00:00.000Z",
+      likeCount: 128,
+      commentCount: 24,
+      isLiked: false,
+    },
+    {
+      id: "static-post-2",
+      caption: "Our team just wrapped up a successful guest relations workshop. The energy and learning mindset in hospitality is incredible.",
+      imageUrl: "",
+      user: {
+        FirstName: "Rohan",
+        LastName: "Mehta",
+        profilePhoto: "",
+        id: "user-2",
+      },
+      createdAt: "2026-10-25T12:30:00.000Z",
+      likeCount: 94,
+      commentCount: 15,
+      isLiked: true,
+    },
+  ];
 
-useEffect(() => {
-  const token = tokenStore.get()
-  if (!token) return 
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [showGate, setShowGate] = useState(false);
+  const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
+  const router = useRouter();
 
-  try {
-    const decoded = jwtDecode<JwtPayload>(token)
-    setCurrentUserId(decoded.userId ?? "")
-  } catch {
-    tokenStore.set(null)
-  }
-}, []) 
+  // useEffect(() => {
+  //   const token = tokenStore.get()
+  //   if (!token) return 
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
+  //   try {
+  //     const decoded = jwtDecode<JwtPayload>(token)
+  //     setCurrentUserId(decoded.userId ?? "")
+  //   } catch {
+  //     tokenStore.set(null)
+  //   }
+  // }, [])
 
-  const handleLike = (postId:string)=>{
-      if (!tokenStore.get()) {
-      setGateAction("like")
-      setShowGate(true)
-      return
-    }
-     handlelike(postId);
-  }
+  // function formatTime(iso: string) {
+  //   return new Date(iso).toLocaleDateString("en-IN", {
+  //     day: "numeric",
+  //     month: "short",
+  //     year: "numeric",
+  //   })
+  // }
 
-  const handleCommentClick = (postId: string) => {
-  if (!tokenStore.get()) {
-    setGateAction("comment");
-    setShowGate(true);
-    return;
-  }
-  router.push(`/post/${postId}`);
-};
+  // const handleLike = (postId:string)=>{
+  //     if (!tokenStore.get()) {
+  //     setGateAction("like")
+  //     setShowGate(true)
+  //     return
+  //   }
+  //    handlelike(postId);
+  // }
 
-console.log("posts",posts)
+  // const handleCommentClick = (postId: string) => {
+  // if (!tokenStore.get()) {
+  //   setGateAction("comment");
+  //   setShowGate(true);
+  //   return;
+  // }
+  // router.push(`/post/${postId}`);
+  // };
+
+  console.log("posts", posts);
 
   return (
     <main className="min-h-screen bg-background text-text-primary">

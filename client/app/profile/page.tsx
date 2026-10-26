@@ -8,9 +8,9 @@ import OpportunityCard from "@/src/components/homePage/OpportunityCard/Opportuni
 import PostCard from "@/src/components/homePage/PostCard/PostCard";
 import SectionHeader from "@/src/components/homePage/SectionHeader/SectionHeader";
 import TweetCard from "@/src/components/User/Post/TweetCard";
-import { useGetPosts, useHandleLike } from "@/src/hooks/post/postHooks";
-import { tokenStore } from "@/src/lib/auth/tokenStore";
-import { jwtDecode } from "jwt-decode";
+// import { useGetPosts, useHandleLike } from "@/src/hooks/post/postHooks";
+// import { tokenStore } from "@/src/lib/auth/tokenStore";
+// import { jwtDecode } from "jwt-decode";
 import {
   ArrowRight,
   BriefcaseBusiness,
@@ -162,44 +162,89 @@ interface JwtPayload {
 }
 
 export default function HomePage() {
+  // const {mutate:handlelike,isPending:ispendingLike} = useHandleLike();
+  // const { data: posts, isLoading, isError } = useGetPosts();
+  const posts = [
+    {
+      id: "profile-static-post-1",
+      caption: "Looking forward to meeting hospitality leaders and sharing ideas around guest experience and service excellence.",
+      imageUrl: "",
+      user: {
+        FirstName: "Ananya",
+        LastName: "Deshmukh",
+        profilePhoto: "",
+        id: "user-1",
+      },
+      createdAt: "2026-10-26T09:00:00.000Z",
+      likeCount: 45,
+      commentCount: 8,
+      isLiked: false,
+    },
+    {
+      id: "profile-static-post-2",
+      caption: "A strong hospitality career starts with learning, empathy and clear service standards. Proud to be growing in this space.",
+      imageUrl: "",
+      user: {
+        FirstName: "Ananya",
+        LastName: "Deshmukh",
+        profilePhoto: "",
+        id: "user-1",
+      },
+      createdAt: "2026-10-24T18:15:00.000Z",
+      likeCount: 63,
+      commentCount: 12,
+      isLiked: true,
+    },
+  ];
 
-  const {mutate:handlelike,isPending:ispendingLike} = useHandleLike();
-const { data: posts, isLoading, isError } = useGetPosts()
-const [currentUserId, setCurrentUserId] = useState("");
- const [showGate, setShowGate] = useState(false);
- const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
+  const [currentUserId, setCurrentUserId] = useState("");
+  const [showGate, setShowGate] = useState(false);
+  const [gateAction, setGateAction] = useState<"like" | "comment" | "post" | "connect">("post");
 
+  // useEffect(() => {
+  //   const token = tokenStore.get()
+  //   if (!token) return
 
-useEffect(() => {
-  const token = tokenStore.get()
-  if (!token) return 
+  //   try {
+  //     const decoded = jwtDecode<JwtPayload>(token)
+  //     setCurrentUserId(decoded.userId ?? "")
+  //   } catch {
+  //     tokenStore.set(null)
+  //   }
+  // }, [])
 
-  try {
-    const decoded = jwtDecode<JwtPayload>(token)
-    setCurrentUserId(decoded.userId ?? "")
-  } catch {
-    tokenStore.set(null)
-  }
-}, []) 
+  // function formatTime(iso: string) {
+  //   return new Date(iso).toLocaleDateString("en-IN", {
+  //     day: "numeric",
+  //     month: "short",
+  //     year: "numeric",
+  //   })
+  // }
 
-function formatTime(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  })
-}
+  // const handleLike = (postId:string)=>{
+  //     if (!tokenStore.get()) {
+  //     setGateAction("like")
+  //     setShowGate(true)
+  //     return
+  //   }
+  //    handlelike(postId);
+  // }
 
-  const handleLike = (postId:string)=>{
-      if (!tokenStore.get()) {
-      setGateAction("like")
-      setShowGate(true)
-      return
-    }
-     handlelike(postId);
-  }
+  const formatTime = (iso: string) => {
+    return new Date(iso).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
-console.log(posts)
+  const handleLike = (postId: string) => {
+    console.log("Static like click:", postId);
+    setGateAction("like");
+    setShowGate(true);
+  };
+
+  console.log(posts);
 
   return (
     <main className="min-h-screen bg-background text-text-primary">
