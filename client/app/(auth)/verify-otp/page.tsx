@@ -26,23 +26,29 @@ const RESEND_SECONDS = 30;
 
 export default function VerifyOtpPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  // const searchParams = useSearchParams();
 
-  useEffect(() => {
-    const token = tokenStore.get();
-    if (token) router.back();
-  }, [router]);
+  // useEffect(() => {
+  //   const token = tokenStore.get();
+  //   if (token) router.back();
+  // }, [router]);
 
-  const verificationToken = searchParams.get("token") ?? "";
-  const maskedPhone = searchParams.get("phone") ?? "your phone";
+  // const verificationToken = searchParams.get("token") ?? "";
+  // const maskedPhone = searchParams.get("phone") ?? "your phone";
+
+  const verificationToken = "";
+  const maskedPhone = "your phone";
 
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
   const [showToast, setShowToast] = useState(false);
   const otpSentRef = useRef(false);
 
-  const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
-  const { mutate: resendOtp, isPending: isResending } = useResendOtp();
-  const { mutate: sendOtp, isPending: isSendingOtp } = useSendOtp();
+  // const { mutate: verifyOtp, isPending: isVerifying } = useVerifyOtp();
+  // const { mutate: resendOtp, isPending: isResending } = useResendOtp();
+  // const { mutate: sendOtp, isPending: isSendingOtp } = useSendOtp();
+  const isVerifying = false;
+  const isResending = false;
+  const isSendingOtp = false;
 
   const {
     control,
@@ -59,66 +65,68 @@ export default function VerifyOtpPage() {
     setTimeout(() => setShowToast(false), 3000);
   };
 
-  useEffect(() => {
-    if (secondsLeft <= 0) return;
-    const timer = setInterval(() => setSecondsLeft((prev) => prev - 1), 1000);
-    return () => clearInterval(timer);
-  }, [secondsLeft]);
+  // useEffect(() => {
+  //   if (secondsLeft <= 0) return;
+  //   const timer = setInterval(() => setSecondsLeft((prev) => prev - 1), 1000);
+  //   return () => clearInterval(timer);
+  // }, [secondsLeft]);
 
   /* Send initial OTP */
-  useEffect(() => {
-    if (!verificationToken) {
-      router.replace("/register");
-      return;
-    }
-    if (otpSentRef.current) return;
-    otpSentRef.current = true;
+  // useEffect(() => {
+  //   if (!verificationToken) {
+  //     router.replace("/register");
+  //     return;
+  //   }
+  //   if (otpSentRef.current) return;
+  //   otpSentRef.current = true;
 
-    sendOtp(
-      { token: verificationToken },
-      {
-        onSuccess: flashToast,
-        onError: (error) => {
-          console.error("Send OTP error:", error);
-          toast.error("Unable to send OTP. Please register again.");
-          router.replace("/register");
-        },
-      }
-    );
-  }, [verificationToken, router, sendOtp]);
+  //   sendOtp(
+  //     { token: verificationToken },
+  //     {
+  //       onSuccess: flashToast,
+  //       onError: (error) => {
+  //         console.error("Send OTP error:", error);
+  //         toast.error("Unable to send OTP. Please register again.");
+  //         router.replace("/register");
+  //       },
+  //     }
+  //   );
+  // }, [verificationToken, router, sendOtp]);
 
   const onSubmit = (values: OtpFormValues) => {
-    verifyOtp(
-      { token: verificationToken, otp: values.otp },
-      {
-        onSuccess: () => router.push("/login"),
-        onError: (error) => {
-          console.error("Verify OTP error:", error);
-          setError("otp", {
-            type: "manual",
-            message: "That code didn't match — check and try again",
-          });
-        },
-      }
-    );
+    // verifyOtp(
+    //   { token: verificationToken, otp: values.otp },
+    //   {
+    //     onSuccess: () => router.push("/login"),
+    //     onError: (error) => {
+    //       console.error("Verify OTP error:", error);
+    //       setError("otp", {
+    //         type: "manual",
+    //         message: "That code didn't match — check and try again",
+    //       });
+    //     },
+    //   }
+    // );
+    console.log("Static OTP submit:", values.otp);
   };
 
   const handleResend = () => {
-    if (secondsLeft > 0 || isResending) return;
+    // if (secondsLeft > 0 || isResending) return;
 
-    resendOtp(
-      { token: verificationToken },
-      {
-        onSuccess: () => {
-          setSecondsLeft(RESEND_SECONDS);
-          flashToast();
-        },
-        onError: (error) => {
-          console.error("Resend OTP error:", error);
-          toast.error("Unable to resend code. Please try again.");
-        },
-      }
-    );
+    // resendOtp(
+    //   { token: verificationToken },
+    //   {
+    //     onSuccess: () => {
+    //       setSecondsLeft(RESEND_SECONDS);
+    //       flashToast();
+    //     },
+    //     onError: (error) => {
+    //       console.error("Resend OTP error:", error);
+    //       toast.error("Unable to resend code. Please try again.");
+    //     },
+    //   }
+    // );
+    console.log("Static resend OTP");
   };
 
   const isBusy = isVerifying || isSubmitting || isSendingOtp;
