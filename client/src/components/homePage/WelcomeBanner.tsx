@@ -16,7 +16,7 @@ export default function WelcomeBanner({ name = "Kundan" }: { name?: string }) {
         </p>
       </div>
 
-      <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 sm:block">
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-[34%] min-[480px]:w-[38%] sm:w-1/2">
         <Image
           src="https://dl.dropbox.com/scl/fi/xq69h7ahhh8z0njn6du76/bfbe7001fa7177f6d2f27fdeaf48aeb611a90b08-1.png?rlkey=6ihdwwfiq6k6x6h9tx8bo40fa&st=7x4pbkdv&dl=0"
           alt="Luxury hospitality lounge background"
