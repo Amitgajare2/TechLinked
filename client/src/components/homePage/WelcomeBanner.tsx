@@ -18,8 +18,8 @@ export default function WelcomeBanner({ name = "Kundan" }: { name?: string }) {
 
       <div className="pointer-events-none absolute inset-y-0 right-0 hidden w-1/2 sm:block">
         <Image
-          src="/images/hero-reception.jpg"
-          alt="A hotel reception desk decorated with fresh flowers"
+          src="https://dl.dropbox.com/scl/fi/xq69h7ahhh8z0njn6du76/bfbe7001fa7177f6d2f27fdeaf48aeb611a90b08-1.png?rlkey=6ihdwwfiq6k6x6h9tx8bo40fa&st=7x4pbkdv&dl=0"
+          alt="Luxury hospitality lounge background"
           fill
           sizes="(min-width: 1024px) 420px, 50vw"
           className="object-cover"

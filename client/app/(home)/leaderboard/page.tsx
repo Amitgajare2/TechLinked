@@ -5,7 +5,7 @@ import {
   Medal,
 } from "lucide-react";
 
-import { useLeaderboard } from "@/src/hooks/space/useSpacehooks";
+// import { useLeaderboard } from "@/src/hooks/space/useSpacehooks";
 import getTier from "@/src/components/LeaderBoardPage/GetTier";
 import PodiumSpot from "@/src/components/LeaderBoardPage/PodiumSpot";
 import Avatar from "@/src/components/LeaderBoardPage/Avtar";
@@ -33,24 +33,42 @@ interface LeaderboardResponse {
   currentUser: CurrentUser | null;
 }
 
+const demoLeaderboard: LeaderboardUser[] = [
+  { rank: 1, id: "u1", name: "Priya Sharma", college: "Institute of Hotel Management", profilePhoto: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80", impactPoints: 980 },
+  { rank: 2, id: "u2", name: "Vihan Patel", college: "School of Hospitality", profilePhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80", impactPoints: 925 },
+  { rank: 3, id: "u3", name: "Mira Nair", college: "Culinary Arts Academy", profilePhoto: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=200&q=80", impactPoints: 910 },
+  { rank: 4, id: "u4", name: "Aarav Singh", college: "Global Hotel School", profilePhoto: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80", impactPoints: 870 },
+  { rank: 5, id: "u5", name: "Sara Ali", college: "Leisure Management College", profilePhoto: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=200&q=80", impactPoints: 845 },
+  { rank: 6, id: "u6", name: "Kabir Mehta", college: "Hospitality Business Institute", profilePhoto: "https://images.unsplash.com/photo-1504593811423-6dd665756598?auto=format&fit=crop&w=200&q=80", impactPoints: 820 },
+  { rank: 7, id: "u7", name: "Tanya Verma", college: "City Hotel Academy", profilePhoto: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=200&q=80", impactPoints: 794 },
+  { rank: 8, id: "u8", name: "Rohan Das", college: "Hospitality & Tourism School", profilePhoto: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80", impactPoints: 780 },
+  { rank: 9, id: "u9", name: "Nisha Kulkarni", college: "Service Excellence Institute", profilePhoto: "https://images.unsplash.com/photo-1542131596-dea4e6d9a92d?auto=format&fit=crop&w=200&q=80", impactPoints: 760 },
+  { rank: 10, id: "u10", name: "Dev Kapoor", college: "Premier Hotel Studies", profilePhoto: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80", impactPoints: 734 },
+];
+
+const demoCurrentUser: CurrentUser = {
+  id: "u7",
+  rank: 7,
+  impactPoints: 794,
+  pointsToNextRank: 26,
+};
+
 export default function LeaderboardPage() {
+  /*
   const {
     data,
     isLoading,
     isError,
   } = useLeaderboard();
 
-
-  const leaderboardData =
-    data as LeaderboardResponse | undefined;
+  const leaderboardData = data as LeaderboardResponse | undefined;
 
   const leaderboard = useMemo(
     () => leaderboardData?.leaderboard ?? [],
     [leaderboardData]
   );
 
-  const currentUser =
-    leaderboardData?.currentUser ?? null;
+  const currentUser = leaderboardData?.currentUser ?? null;
 
   const podium = leaderboard.slice(0, 3);
 
@@ -58,9 +76,20 @@ export default function LeaderboardPage() {
     currentUser !== null &&
     currentUser.rank > leaderboard.length;
 
-    useEffect(()=>{
-          
-    },[])
+  useEffect(() => {
+  }, []);
+  */
+
+  const leaderboard = demoLeaderboard;
+  const currentUser = demoCurrentUser;
+  const podium = leaderboard.slice(0, 3);
+  const isCurrentUserOutsideTop = currentUser.rank > leaderboard.length;
+  const isLoading = false;
+  const isError = false;
+
+  useEffect(() => {
+    // Demo data is being shown intentionally while backend data is unavailable.
+  }, []);
 
   if (isLoading) {
     return (

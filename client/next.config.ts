@@ -1,6 +1,30 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.pexels.com",
+      },
+      {
+        protocol: "https",
+        hostname: "i.pravatar.cc",
+      },
+      {
+        protocol: "https",
+        hostname: "dl.dropboxusercontent.com",
+      },
+      {
+        protocol: "https",
+        hostname: "dl.dropbox.com",
+      },
+    ],
+  },
   async rewrites() {
     const apiUrl =
       process.env.API_URL || "http://localhost:5000";

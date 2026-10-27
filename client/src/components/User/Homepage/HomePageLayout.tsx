@@ -268,11 +268,11 @@ const onShare = async (postId: string) => {
                 </div>
 
                 <div className="space-y-1">
-                  <ExploreItem
+                  {/* <ExploreItem
                     icon={BriefcaseBusiness}
                     title="Opportunities"
                     subtitle="Jobs & internships"
-                  />
+                  /> */}
 
                   <ExploreItem
                     icon={Trophy}
@@ -286,11 +286,11 @@ const onShare = async (postId: string) => {
                     subtitle="Build & collaborate"
                   />
 
-                  <ExploreItem
+                  {/* <ExploreItem
                     icon={CalendarDays}
                     title="Activities"
                     subtitle="Competitions & events"
-                  />
+                  /> */}
                 </div>
               </section>
 
@@ -427,7 +427,7 @@ const onShare = async (postId: string) => {
             {/* RIGHT COLUMN */}
 
             <aside className="sticky top-8 h-fit pl-6 hidden lg:block">
-              <section>
+              {/* <section>
                 <SectionHeader
                   title="Opportunities"
                   subtitle="Because of your profile"
@@ -442,7 +442,7 @@ const onShare = async (postId: string) => {
                     />
                   ))}
                 </div>
-              </section>
+              </section> */}
 
               {/* Progress */}
               <section className="mt-6 overflow-hidden rounded-2xl border border-primary-border bg-surface">
@@ -497,7 +497,7 @@ const onShare = async (postId: string) => {
               </section>
 
               {/* Activities */}
-              <section className="mt-6">
+              {/* <section className="mt-6">
                 <SectionHeader
                   title="Activities"
                   subtitle="Participate & grow"
@@ -512,7 +512,7 @@ const onShare = async (postId: string) => {
                     />
                   ))}
                 </div>
-              </section>
+              </section> */}
 
               <div className="mt-8 px-1 text-[10px] leading-5 text-text-subtle">
                 <div className="flex flex-wrap gap-x-3 gap-y-1">
