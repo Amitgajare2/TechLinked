@@ -16,14 +16,14 @@ export default function NavBar({setPost}:any) {
 
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname?.startsWith(href));
 
-  const handleCreatePostClick = () => {
-     const token = tokenStore.get(); 
-    if (!token) {
-      setShowGate(true);
-      return;
-    }
-    setPost(true);
-  };
+  // const handleCreatePostClick = () => {
+  //    const token = tokenStore.get(); 
+  //   if (!token) {
+  //     setShowGate(true);
+  //     return;
+  //   }
+  //   setPost(true);
+  // };
 
   return (
     <>
@@ -36,6 +36,7 @@ export default function NavBar({setPost}:any) {
           <Ranking />
         </Link>
 
+        {/* Original floating + create button kept commented out and hidden from render.
         <button
           onClick={handleCreatePostClick}
           aria-label="Create post"
@@ -43,6 +44,7 @@ export default function NavBar({setPost}:any) {
         >
           <Plus size={24} strokeWidth={2.5} />
         </button>
+        */}
 
         <Link href="/projects" aria-label="Projects" className={`flex h-11 w-11 items-center justify-center rounded-full transition ${isActive("/projects") ? "bg-orange-500 text-white shadow-sm" : "text-text-secondary hover:bg-primary-soft"}`}>
           <FolderKanban size={20} />
@@ -53,11 +55,13 @@ export default function NavBar({setPost}:any) {
         </button>
       </nav>
 
+      {/* Original gate modal kept commented out.
       {showGate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <GuestGateModal isOpen={showGate} onClose={() => setShowGate(false)} action="post" />
         </div>
       )}
+      */}
     </>
   );
 }

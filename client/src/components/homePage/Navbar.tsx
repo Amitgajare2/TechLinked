@@ -91,6 +91,7 @@ export default function Navbar() {
             <ChevronDownIcon className="h-4 w-4 stroke-ink-soft" />
           </button>
 
+          {/* Original create button kept commented out and hidden from render.
           <Link
             href="/create"
             className="flex items-center gap-1.5 rounded-pill bg-brand-orange px-3.5 py-2 text-sm font-semibold text-white shadow-card transition-colors hover:bg-brand-orange-dark sm:px-4"
@@ -98,6 +99,7 @@ export default function Navbar() {
             <PlusIcon className="h-4 w-4 stroke-current" />
             <span className="hidden sm:inline">Create</span>
           </Link>
+          */}
 
           {/* Mobile menu toggle */}
           <button

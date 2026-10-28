@@ -149,12 +149,22 @@ export default function HomePage() {
         "I am proud to be in a field where people skills, operations, and service excellence all come together to create memorable stays."
       ];
 
+      const demoPostImages = [
+        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1566665797739-1674de7a421a?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=1200&q=80",
+        "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+      ];
+
       const createdAt = new Date(Date.UTC(2026, 9, 26 - index, 10, 0, 0)).toISOString();
+      const hasImage = index % 3 === 0 || index % 5 === 0;
 
       return {
         id: `static-post-${index + 1}`,
         caption: captions[index % captions.length],
-        imageUrl: "",
+        imageUrl: hasImage ? demoPostImages[index % demoPostImages.length] : "",
         user: {
           FirstName: profile.first,
           LastName: profile.last,

@@ -73,7 +73,7 @@ export default function LeftSidebar() {
       </div>
 
       {/* Quick links card */}
-      <nav aria-label="Quick links" className="rounded-card bg-white p-5 shadow-card">
+      {/* <nav aria-label="Quick links" className="rounded-card bg-white p-5 shadow-card">
         <h2 className="font-display text-base font-bold text-brand-orange-dark">Quick Links</h2>
         <ul className="mt-2 divide-y divide-line">
           {QUICK_LINKS.map((item) => (
@@ -91,7 +91,7 @@ export default function LeftSidebar() {
             </li>
           ))}
         </ul>
-      </nav>
+      </nav> */}
 
       {/* Promo card */}
       <div className="relative hidden overflow-hidden rounded-card md:block">
